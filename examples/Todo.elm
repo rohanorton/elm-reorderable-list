@@ -120,9 +120,9 @@ view { todos, reorderableState } =
         todos
 
 
-todoView : List (Attribute Msg) -> Todo -> Html Msg
+todoView : Reorderable.HtmlWrapper Msg -> Todo -> Html Msg
 todoView ignoreDrag { id, action, done } =
     div []
         [ input [ type' "checkbox", onClick <| Toggle id, value <| toString done ] []
-        , input ([ type' "text", value action ] ++ ignoreDrag) []
+        , ignoreDrag input [ type' "text", value action ] []
         ]

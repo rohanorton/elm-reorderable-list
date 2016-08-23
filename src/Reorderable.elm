@@ -1,4 +1,4 @@
-module Reorderable exposing (Msg, State, init, update, ul, ol)
+module Reorderable exposing (Msg, State, HtmlWrapper, init, update, ul, ol)
 
 import Html exposing (li, span, Html, Attribute)
 import Html.Keyed as Keyed
@@ -60,10 +60,20 @@ update msg (State state) =
 -- VIEW
 
 
+type alias HtmlWrapper msg =
+    (List (Attribute msg)
+     -> List (Html msg)
+     -> Html msg
+    )
+    -> List (Attribute msg)
+    -> List (Html msg)
+    -> Html msg
+
+
 type alias Config data msg =
     { toId : data -> String
     , toMsg : Msg -> msg
-    , itemView : List (Attribute msg) -> data -> Html msg
+    , itemView : HtmlWrapper msg -> data -> Html msg
     , draggable : Bool
     , updateList : (() -> List data) -> msg
     }
@@ -104,8 +114,12 @@ liView config list (State state) data =
         )
 
 
-ignoreDrag : (Msg -> msg) -> List (Attribute msg)
-ignoreDrag toMsg =
-    [ on "mouseenter" <| Json.succeed <| toMsg <| MouseOver True
-    , on "mouseleave" <| Json.succeed <| toMsg <| MouseOver False
-    ]
+ignoreDrag : (Msg -> msg) -> HtmlWrapper msg
+ignoreDrag toMsg elem attr children =
+    elem
+        (attr
+            ++ [ on "mouseenter" <| Json.succeed <| toMsg <| MouseOver True
+               , on "mouseleave" <| Json.succeed <| toMsg <| MouseOver False
+               ]
+        )
+        children
