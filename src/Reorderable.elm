@@ -63,7 +63,7 @@ update msg (State state) =
 type alias Config data msg =
     { toId : data -> String
     , toMsg : Msg -> msg
-    , itemView : data -> Html msg
+    , itemView : List (Attribute msg) -> data -> Html msg
     , draggable : Bool
     , updateList : (() -> List data) -> msg
     }
