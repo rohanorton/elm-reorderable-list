@@ -124,5 +124,5 @@ todoView : Todo -> Html Msg
 todoView { id, action, done } =
     div []
         [ input [ type' "checkbox", onClick <| Toggle id, value <| toString done ] []
-        , input [ type' "text", value action ] []
+        , Reorderable.ignore ReorderableMsg <| input [ type' "text", value action ] []
         ]

@@ -1,6 +1,6 @@
-module Reorderable exposing (Msg, State, init, update, ul, ol)
+module Reorderable exposing (Msg, State, init, ignore, update, ul, ol)
 
-import Html exposing (li, Html, Attribute)
+import Html exposing (li, span, Html, Attribute)
 import Html.Keyed as Keyed
 import Html.Attributes exposing (draggable)
 import Html.Events exposing (on, onWithOptions)
@@ -104,9 +104,10 @@ liView config list (State state) data =
         )
 
 
-ignore : (Msg -> msg) -> List (Attribute msg) -> List (Attribute msg)
-ignore toMsg attributes =
-    attributes
-        ++ [ on "mouseenter" <| Json.succeed <| toMsg <| MouseOver True
-           , on "mouseleave" <| Json.succeed <| toMsg <| MouseOver False
-           ]
+ignore : (Msg -> msg) -> Html msg -> Html msg
+ignore toMsg html =
+    span
+        [ on "mouseenter" <| Json.succeed <| toMsg <| MouseOver True
+        , on "mouseleave" <| Json.succeed <| toMsg <| MouseOver False
+        ]
+        [ html ]
