@@ -1,6 +1,18 @@
-module Reorderable exposing (Msg, State, HtmlWrapper, init, update, ul, ol)
+module Reorderable
+    exposing
+        ( Msg
+        , State
+        , HtmlWrapper
+        , Config
+        , init
+        , simpleConfig
+        , update
+        , ul
+        , ol
+        )
 
-import Html exposing (li, span, Html, Attribute)
+
+import Html exposing (li, text, Html, Attribute)
 import Html.Keyed as Keyed
 import Html.Attributes exposing (draggable)
 import Html.Events exposing (on, onWithOptions)
@@ -123,3 +135,17 @@ ignoreDrag toMsg elem attr children =
                ]
         )
         children
+
+
+
+-- CONFIGS
+
+
+simpleConfig : { toMsg : Msg -> msg, updateList : (() -> List String) -> msg } -> Config String msg
+simpleConfig { toMsg, updateList } =
+    { toId = identity
+    , toMsg = toMsg
+    , itemView = always text
+    , draggable = True
+    , updateList = updateList
+    }
