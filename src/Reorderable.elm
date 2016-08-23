@@ -36,11 +36,6 @@ type Msg
     | StopDragging
 
 
-type alias UpdateConfig data =
-    { toId : data -> String
-    }
-
-
 update : Msg -> State -> State
 update msg (State state) =
     case msg of
