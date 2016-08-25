@@ -56,7 +56,7 @@ initialTodos =
 init : Model
 init =
     { todos = initialTodos
-    , reorderableState = Reorderable.init
+    , reorderableState = Reorderable.initialState
     }
 
 
@@ -110,12 +110,14 @@ toggleDone id todos =
 view : Model -> Html Msg
 view { todos, reorderableState } =
     Reorderable.ul
-        { toId = .id
-        , toMsg = ReorderableMsg
-        , draggable = True
-        , updateList = UpdateList
-        , itemView = todoView
-        }
+        (Reorderable.fullConfig
+            { toId = .id
+            , toMsg = ReorderableMsg
+            , draggable = True
+            , updateList = UpdateList
+            , itemView = todoView
+            }
+        )
         reorderableState
         todos
 

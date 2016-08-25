@@ -1,16 +1,35 @@
 module Reorderable
     exposing
-        ( Msg
-        , State
-        , HtmlWrapper
-        , Config
-        , init
-        , simpleConfig
-        , update
-        , ul
+        ( ul
         , ol
+        , State
+        , initialState
+        , Msg
+        , update
+        , Config
+        , HtmlWrapper
+        , simpleConfig
+        , fullConfig
         )
 
+{-| This library helps you create drag and drop re-orderable html lists
+
+Check out the [examples][] to see how it works
+[examples]: https://github.com/rohanorton/elm-reorderable-list/tree/master/examples
+
+# View
+@docs ul, ol
+
+# Config
+@docs Config, HtmlWrapper, simpleConfig, fullConfig
+
+# State
+@docs State, initialState
+
+# Updates
+@docs Msg, update
+
+-}
 
 import Html exposing (li, text, Html, Attribute)
 import Html.Keyed as Keyed
@@ -23,18 +42,25 @@ import Reorderable.Helpers as Helpers
 -- MODEL
 
 
+{-| Internal state of the re-orderable component.
+
+Tracks which element is being dragged and whether mouse is over an ignored
+element.
+-}
 type State
     = State
         { dragging : Maybe String
-        , mouseOver : Bool
+        , mouseOverIgnored : Bool
         }
 
 
-init : State
-init =
+{-| Create the inital state for your re-orderable component.
+-}
+initialState : State
+initialState =
     State
         { dragging = Nothing
-        , mouseOver = False
+        , mouseOverIgnored = False
         }
 
 
@@ -42,22 +68,27 @@ init =
 -- UPDATE
 
 
+{-| Messages sent to internal update command used for updating the internal
+component state.
+-}
 type Msg
     = MouseOver Bool
     | StartDragging String
     | StopDragging
 
 
+{-| Update function for updating the state of the component.
+-}
 update : Msg -> State -> State
 update msg (State state) =
     case msg of
-        MouseOver mouseOver ->
-            State { state | mouseOver = mouseOver }
+        MouseOver mouseOverIgnored ->
+            State { state | mouseOverIgnored = mouseOverIgnored }
 
         StartDragging id ->
             let
                 dragging =
-                    if state.mouseOver then
+                    if state.mouseOverIgnored then
                         Nothing
                     else
                         Just id
@@ -72,37 +103,32 @@ update msg (State state) =
 -- VIEW
 
 
-type alias HtmlWrapper msg =
-    (List (Attribute msg)
-     -> List (Html msg)
-     -> Html msg
-    )
-    -> List (Attribute msg)
-    -> List (Html msg)
-    -> Html msg
+{-| Takes a list and turn it into an html, drag and drop re-orderable
+ordered-list. `Config` is configuration for the component, describing how the
+data should be displayed and how to handle events.
 
-
-type alias Config data msg =
-    { toId : data -> String
-    , toMsg : Msg -> msg
-    , itemView : HtmlWrapper msg -> data -> Html msg
-    , draggable : Bool
-    , updateList : (() -> List data) -> msg
-    }
-
-
+**Note:** `State` and `List data` belong in your `Model`. `Config` belongs in
+your view.
+-}
 ol : Config data msg -> State -> List data -> Html msg
 ol config state list =
     Keyed.ol [] <| List.map (liView config list state) list
 
 
+{-| Takes a list and turn it into an html, drag and drop re-orderable
+unordered-list. `Config` is configuration for the component, describing how the
+data should be displayed and how to handle events.
+
+**Note:** `State` and `List data` belong in your `Model`. `Config` belongs in
+your view.
+-}
 ul : Config data msg -> State -> List data -> Html msg
 ul config state list =
     Keyed.ul [] <| List.map (liView config list state) list
 
 
 liView : Config data msg -> List data -> State -> data -> ( String, Html msg )
-liView config list (State state) data =
+liView (Config config) list (State state) data =
     let
         id =
             config.toId data
@@ -111,8 +137,8 @@ liView config list (State state) data =
         , li
             [ draggable <| toString config.draggable
             , onWithOptions "dragstart"
-                { stopPropagation = state.mouseOver
-                , preventDefault = state.mouseOver
+                { stopPropagation = state.mouseOverIgnored
+                , preventDefault = state.mouseOverIgnored
                 }
                 <| Json.succeed
                 <| config.toMsg (StartDragging id)
@@ -138,14 +164,60 @@ ignoreDrag toMsg elem attr children =
 
 
 
--- CONFIGS
+-- CONFIG
 
 
+{-| Configuration for your re-orderable list.
+
+**Note:** Your `Config` should *never* be held in your model.
+It should only appear in `view` code.
+-}
+type Config data msg
+    = Config
+        { toId : data -> String
+        , toMsg : Msg -> msg
+        , itemView : HtmlWrapper msg -> data -> Html msg
+        , draggable : Bool
+        , updateList : (() -> List data) -> msg
+        }
+
+
+{-| This type alias is to simplify the definition of a function that takes a
+standard html function and its arguments to return a Html msg
+
+This doesn't make much sense in the abstract, check out the ignoreDrag function
+for an example
+-}
+type alias HtmlWrapper msg =
+    (List (Attribute msg)
+     -> List (Html msg)
+     -> Html msg
+    )
+    -> List (Attribute msg)
+    -> List (Html msg)
+    -> Html msg
+
+
+{-| A really really simple re-orderable list.
+
+For creating a basic reorderable ul or ol from a list of strings. It's
+painfully simple and probably a bit useless!
+
+-}
 simpleConfig : { toMsg : Msg -> msg, updateList : (() -> List String) -> msg } -> Config String msg
 simpleConfig { toMsg, updateList } =
-    { toId = identity
-    , toMsg = toMsg
-    , itemView = always text
-    , draggable = True
-    , updateList = updateList
-    }
+    Config
+        { toId = identity
+        , toMsg = toMsg
+        , itemView = always text
+        , draggable = True
+        , updateList = updateList
+        }
+
+
+{-|
+
+-}
+fullConfig : { toId : data -> String, toMsg : Msg -> msg, itemView : HtmlWrapper msg -> data -> Html msg, draggable : Bool, updateList : (() -> List data) -> msg } -> Config data msg
+fullConfig =
+    Config
