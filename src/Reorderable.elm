@@ -33,7 +33,7 @@ Check out the [examples][] to see how it works
 
 import Html exposing (li, text, Html, Attribute)
 import Html.Keyed as Keyed
-import Html.Attributes exposing (draggable)
+import Html.Attributes exposing (draggable, class)
 import Html.Events exposing (on, onWithOptions)
 import Json.Decode as Json
 import Reorderable.Helpers as Helpers
@@ -111,8 +111,8 @@ data should be displayed and how to handle events.
 your view.
 -}
 ol : Config data msg -> State -> List data -> Html msg
-ol config state list =
-    Keyed.ol [] <| List.map (liView config list state) list
+ol ((Config { listClass }) as config) state list =
+    Keyed.ol [ class listClass ] <| List.map (liView config list state) list
 
 
 {-| Takes a list and turn it into an html, drag and drop re-orderable
@@ -123,8 +123,8 @@ data should be displayed and how to handle events.
 your view.
 -}
 ul : Config data msg -> State -> List data -> Html msg
-ul config state list =
-    Keyed.ul [] <| List.map (liView config list state) list
+ul ((Config { listClass }) as config) state list =
+    Keyed.ul [ class listClass ] <| List.map (liView config list state) list
 
 
 liView : Config data msg -> List data -> State -> data -> ( String, Html msg )
@@ -132,6 +132,12 @@ liView (Config config) list (State state) data =
     let
         id =
             config.toId data
+
+        itemClass =
+            if state.dragging == Just id then
+                config.placeholderClass
+            else
+                config.itemClass
     in
         ( id
         , li
@@ -147,6 +153,7 @@ liView (Config config) list (State state) data =
                 <| Json.succeed
                 <| config.updateList
                 <| (\() -> Helpers.updateList config.toId id state.dragging list)
+            , class itemClass
             ]
             [ config.itemView (ignoreDrag config.toMsg) data ]
         )
@@ -177,6 +184,9 @@ type Config data msg
         { toId : data -> String
         , toMsg : Msg -> msg
         , itemView : HtmlWrapper msg -> data -> Html msg
+        , listClass : String
+        , itemClass : String
+        , placeholderClass : String
         , draggable : Bool
         , updateList : (() -> List data) -> msg
         }
@@ -210,14 +220,31 @@ simpleConfig { toMsg, updateList } =
         { toId = identity
         , toMsg = toMsg
         , itemView = always text
+        , listClass = ""
+        , itemClass = ""
+        , placeholderClass = ""
         , draggable = True
         , updateList = updateList
         }
 
 
-{-|
+{-| Provides all the bells and whistles that this library has to offer at this
+time.
+
+- toId: Converts your data into an ID string. This *must* be a unique ID for
+    the component to work effectively!
 
 -}
-fullConfig : { toId : data -> String, toMsg : Msg -> msg, itemView : HtmlWrapper msg -> data -> Html msg, draggable : Bool, updateList : (() -> List data) -> msg } -> Config data msg
+fullConfig :
+    { toId : data -> String
+    , toMsg : Msg -> msg
+    , itemView : HtmlWrapper msg -> data -> Html msg
+    , listClass : String
+    , itemClass : String
+    , placeholderClass : String
+    , draggable : Bool
+    , updateList : (() -> List data) -> msg
+    }
+    -> Config data msg
 fullConfig =
     Config
