@@ -72,7 +72,7 @@ initialState =
 component state.
 -}
 type Msg
-    = MouseOver Bool
+    = MouseOverIgnored Bool
     | StartDragging String
     | StopDragging
 
@@ -82,7 +82,7 @@ type Msg
 update : Msg -> State -> State
 update msg (State state) =
     case msg of
-        MouseOver mouseOverIgnored ->
+        MouseOverIgnored mouseOverIgnored ->
             State { state | mouseOverIgnored = mouseOverIgnored }
 
         StartDragging id ->
@@ -163,8 +163,8 @@ ignoreDrag : (Msg -> msg) -> HtmlWrapper msg
 ignoreDrag toMsg elem attr children =
     elem
         (attr
-            ++ [ on "mouseenter" <| Json.succeed <| toMsg <| MouseOver True
-               , on "mouseleave" <| Json.succeed <| toMsg <| MouseOver False
+            ++ [ on "mouseenter" <| Json.succeed <| toMsg <| MouseOverIgnored True
+               , on "mouseleave" <| Json.succeed <| toMsg <| MouseOverIgnored False
                ]
         )
         children
