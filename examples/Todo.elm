@@ -116,6 +116,9 @@ view { todos, reorderableState } =
             , draggable = True
             , updateList = UpdateList
             , itemView = todoView
+            , itemClass = ""
+            , listClass = ""
+            , placeholderClass = ""
             }
         )
         reorderableState
