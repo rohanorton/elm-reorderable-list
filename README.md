@@ -16,8 +16,6 @@ API might change a bit before it's released to elm-packages.
 
 These are features that I am going to try and implement soon:
 
-- Placeholder class
-- Handle
 - Items that are sortable -- using selectors class / id ??
 - Animation
 - Snap to grid
