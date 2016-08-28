@@ -29,7 +29,7 @@ type alias Model =
 init : Model
 init =
     { list = [ "apples", "pears", "oranges", "lemons", "peaches", "satsumas" ]
-    , reorderableState = Reorderable.init
+    , reorderableState = Reorderable.initialState
     }
 
 
