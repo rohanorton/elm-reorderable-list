@@ -10,6 +10,7 @@ module Reorderable
         , HtmlWrapper
         , simpleConfig
         , fullConfig
+        , Event(..)
         )
 
 {-| This library helps you create drag and drop re-orderable html lists
@@ -27,7 +28,7 @@ Check out the [examples][] to see how it works
 @docs State, initialState
 
 # Updates
-@docs Msg, update
+@docs Msg, update, Event
 
 -}
 
@@ -77,13 +78,22 @@ type Msg
     | StopDragging
 
 
+{-|
+-}
+type Event
+    = DragStart String
+    | DragEnd
+
+
 {-| Update function for updating the state of the component.
 -}
-update : Msg -> State -> State
+update : Msg -> State -> ( State, Maybe Event )
 update msg (State state) =
     case msg of
         MouseOverIgnored mouseOverIgnored ->
-            State { state | mouseOverIgnored = mouseOverIgnored }
+            ( State { state | mouseOverIgnored = mouseOverIgnored }
+            , Nothing
+            )
 
         StartDragging id ->
             let
@@ -93,10 +103,14 @@ update msg (State state) =
                     else
                         Just id
             in
-                State { state | dragging = dragging }
+                ( State { state | dragging = dragging }
+                , Just <| DragStart id
+                )
 
         StopDragging ->
-            State { state | dragging = Nothing }
+            ( State { state | dragging = Nothing }
+            , Just DragEnd
+            )
 
 
 
@@ -133,11 +147,13 @@ liView (Config config) list (State state) data =
         id =
             config.toId data
 
-        itemClass =
-            if state.dragging == Just id then
-                config.placeholderClass
-            else
-                config.itemClass
+        childView =
+            case ( state.dragging == Just id, config.placeholderView ) of
+                ( True, Just placeholderView ) ->
+                    placeholderView data
+
+                _ ->
+                    config.itemView (ignoreDrag config.toMsg) data
     in
         ( id
         , li
@@ -153,9 +169,9 @@ liView (Config config) list (State state) data =
                 <| Json.succeed
                 <| config.updateList
                 <| (\() -> Helpers.updateList config.toId id state.dragging list)
-            , class itemClass
+            , class config.itemClass
             ]
-            [ config.itemView (ignoreDrag config.toMsg) data ]
+            [ childView ]
         )
 
 
@@ -184,6 +200,7 @@ type Config data msg
         { toId : data -> String
         , toMsg : Msg -> msg
         , itemView : HtmlWrapper msg -> data -> Html msg
+        , placeholderView : Maybe (data -> Html msg)
         , listClass : String
         , itemClass : String
         , placeholderClass : String
@@ -199,10 +216,7 @@ This doesn't make much sense in the abstract, check out the ignoreDrag function
 for an example
 -}
 type alias HtmlWrapper msg =
-    (List (Attribute msg)
-     -> List (Html msg)
-     -> Html msg
-    )
+    (List (Attribute msg) -> List (Html msg) -> Html msg)
     -> List (Attribute msg)
     -> List (Html msg)
     -> Html msg
@@ -223,6 +237,7 @@ simpleConfig { toMsg, updateList } =
         , listClass = ""
         , itemClass = ""
         , placeholderClass = ""
+        , placeholderView = Nothing
         , draggable = True
         , updateList = updateList
         }
@@ -239,6 +254,7 @@ fullConfig :
     { toId : data -> String
     , toMsg : Msg -> msg
     , itemView : HtmlWrapper msg -> data -> Html msg
+    , placeholderView : Maybe (data -> Html msg)
     , listClass : String
     , itemClass : String
     , placeholderClass : String

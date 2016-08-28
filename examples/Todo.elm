@@ -1,7 +1,7 @@
 module Todo exposing (..)
 
 import Html exposing (..)
-import Html.Attributes exposing (style, type', value)
+import Html.Attributes exposing (class, type', value)
 import Html.Events exposing (onClick, onInput)
 import Html.App
 import Reorderable
@@ -90,7 +90,7 @@ update msg model =
 
         ReorderableMsg childMsg ->
             let
-                newReordableState =
+                ( newReordableState, _ ) =
                     Reorderable.update childMsg model.reorderableState
             in
                 { model | reorderableState = newReordableState }
@@ -129,26 +129,33 @@ updateAction id action todos =
 
 view : Model -> Html Msg
 view { todos, reorderableState } =
-    Reorderable.ul
-        (Reorderable.fullConfig
-            { toId = .id
-            , toMsg = ReorderableMsg
-            , draggable = True
-            , updateList = ReorderList
-            , itemView = todoView
-            , itemClass = ""
-            , listClass = ""
-            , placeholderClass = ""
-            }
-        )
-        reorderableState
-        todos
+    div []
+        [ h1 [] [ text "Re-orderable Todo List" ]
+        , div [ class "container" ]
+            [ Reorderable.ul
+                (Reorderable.fullConfig
+                    { toId = .id
+                    , toMsg = ReorderableMsg
+                    , draggable = True
+                    , updateList = ReorderList
+                    , itemView = todoView
+                    , placeholderView = Just placeholderView
+                    , listClass = "todo-list"
+                    , itemClass = "todo-list__item"
+                    , placeholderClass = "todo-list__placeholder"
+                    }
+                )
+                reorderableState
+                todos
+            ]
+        ]
 
 
 todoView : Reorderable.HtmlWrapper Msg -> Todo -> Html Msg
 todoView ignoreDrag { id, action, done } =
     div []
-        [ input
+        [ div [ class "todo-list__item__handle" ] []
+        , input
             [ type' "checkbox"
             , onClick <| UpdateDone id (not done)
             , value <| toString done
@@ -164,3 +171,14 @@ todoView ignoreDrag { id, action, done } =
             ]
             []
         ]
+
+
+placeholderView : a -> Html Msg
+placeholderView _ =
+    div []
+        [ text "dragging!" ]
+
+
+(=>) : String -> String -> ( String, String )
+(=>) =
+    (,)
