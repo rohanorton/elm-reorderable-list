@@ -2,7 +2,7 @@ module Todo exposing (..)
 
 import Html exposing (..)
 import Html.Attributes exposing (style, type', value)
-import Html.Events exposing (onClick)
+import Html.Events exposing (onClick, onInput)
 import Html.App
 import Reorderable
 
@@ -65,18 +65,26 @@ init =
 
 
 type Msg
-    = Toggle String
+    = UpdateDone String Bool
+    | UpdateEntry String String
     | ReorderableMsg Reorderable.Msg
-    | UpdateList (() -> List Todo)
+    | ReorderList (() -> List Todo)
 
 
 update : Msg -> Model -> Model
 update msg model =
     case Debug.log "Current Message" msg of
-        Toggle id ->
+        UpdateDone id done ->
             let
                 newTodos =
-                    toggleDone id model.todos
+                    updateDone id done model.todos
+            in
+                { model | todos = newTodos }
+
+        UpdateEntry id newAction ->
+            let
+                newTodos =
+                    updateAction id newAction model.todos
             in
                 { model | todos = newTodos }
 
@@ -87,16 +95,28 @@ update msg model =
             in
                 { model | reorderableState = newReordableState }
 
-        UpdateList newTodosThunk ->
+        ReorderList newTodosThunk ->
             { model | todos = newTodosThunk () }
 
 
-toggleDone : String -> Todos -> Todos
-toggleDone id todos =
+updateDone : String -> Bool -> Todos -> Todos
+updateDone id done todos =
     List.map
         (\todo ->
             if todo.id == id then
-                { todo | done = not todo.done }
+                { todo | done = done }
+            else
+                todo
+        )
+        todos
+
+
+updateAction : String -> String -> Todos -> Todos
+updateAction id action todos =
+    List.map
+        (\todo ->
+            if todo.id == id then
+                { todo | action = action }
             else
                 todo
         )
@@ -114,7 +134,7 @@ view { todos, reorderableState } =
             { toId = .id
             , toMsg = ReorderableMsg
             , draggable = True
-            , updateList = UpdateList
+            , updateList = ReorderList
             , itemView = todoView
             , itemClass = ""
             , listClass = ""
@@ -128,6 +148,19 @@ view { todos, reorderableState } =
 todoView : Reorderable.HtmlWrapper Msg -> Todo -> Html Msg
 todoView ignoreDrag { id, action, done } =
     div []
-        [ input [ type' "checkbox", onClick <| Toggle id, value <| toString done ] []
-        , ignoreDrag input [ type' "text", value action ] []
+        [ input
+            [ type' "checkbox"
+            , onClick <| UpdateDone id (not done)
+            , value <| toString done
+            ]
+            []
+          {- Selecting text inside input shouldn't begin drag, so using the
+             ignoreDrag function to prevent:
+          -}
+        , ignoreDrag input
+            [ type' "text"
+            , onInput <| UpdateEntry id
+            , value action
+            ]
+            []
         ]
