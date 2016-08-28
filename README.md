@@ -7,9 +7,9 @@ API might change a bit before it's released to elm-packages.
 
 ## Examples
 
-  1. [Simple](https://rohanorton.githube.io/elm-reorderable-list/Simple.html) /
+  1. [Simple](https://rohanorton.github.io/elm-reorderable-list/Simple.html) /
      [Code](https://github.com/rohanorton/elm-reorderable-list/blob/master/examples/Simple.elm)
-  2. [More complex](https://rohanorton.githube.io/elm-reorderable-list/Todo.html) /
+  2. [More complex](https://rohanorton.github.io/elm-reorderable-list/Todo.html) /
      [Code](https://github.com/rohanorton/elm-reorderable-list/blob/master/examples/Todo.elm)
 
 ## Roadmap
