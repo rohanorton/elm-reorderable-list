@@ -1,6 +1,8 @@
 <!DOCTYPE HTML>
 <html><head><meta charset="UTF-8"><title>Todo</title><style>html,head,body { padding:0; margin:0; }
-body { font-family: calibri, helvetica, arial, sans-serif; }</style><script type="text/javascript">
+body { font-family: calibri, helvetica, arial, sans-serif; }</style>
+<link href='/examples/Todo.css' type="text/css" rel='stylesheet' />
+<script type="text/javascript">
 (function() {
 'use strict';
 
@@ -9124,30 +9126,6 @@ var _user$project$Reorderable$State = function (a) {
 };
 var _user$project$Reorderable$initialState = _user$project$Reorderable$State(
 	{dragging: _elm_lang$core$Maybe$Nothing, mouseOverIgnored: false});
-var _user$project$Reorderable$update = F2(
-	function (msg, _p0) {
-		var _p1 = _p0;
-		var _p3 = _p1._0;
-		var _p2 = msg;
-		switch (_p2.ctor) {
-			case 'MouseOverIgnored':
-				return _user$project$Reorderable$State(
-					_elm_lang$core$Native_Utils.update(
-						_p3,
-						{mouseOverIgnored: _p2._0}));
-			case 'StartDragging':
-				var dragging = _p3.mouseOverIgnored ? _elm_lang$core$Maybe$Nothing : _elm_lang$core$Maybe$Just(_p2._0);
-				return _user$project$Reorderable$State(
-					_elm_lang$core$Native_Utils.update(
-						_p3,
-						{dragging: dragging}));
-			default:
-				return _user$project$Reorderable$State(
-					_elm_lang$core$Native_Utils.update(
-						_p3,
-						{dragging: _elm_lang$core$Maybe$Nothing}));
-		}
-	});
 var _user$project$Reorderable$StopDragging = {ctor: 'StopDragging'};
 var _user$project$Reorderable$StartDragging = function (a) {
 	return {ctor: 'StartDragging', _0: a};
@@ -9180,15 +9158,29 @@ var _user$project$Reorderable$ignoreDrag = F4(
 			children);
 	});
 var _user$project$Reorderable$liView = F4(
-	function (_p5, list, _p4, data) {
-		var _p6 = _p5;
-		var _p11 = _p6._0;
-		var _p7 = _p4;
-		var _p10 = _p7._0;
-		var id = _p11.toId(data);
-		var itemClass = _elm_lang$core$Native_Utils.eq(
-			_p10.dragging,
-			_elm_lang$core$Maybe$Just(id)) ? _p11.placeholderClass : _p11.itemClass;
+	function (_p1, list, _p0, data) {
+		var _p2 = _p1;
+		var _p8 = _p2._0;
+		var _p3 = _p0;
+		var _p7 = _p3._0;
+		var id = _p8.toId(data);
+		var childView = function () {
+			var _p4 = {
+				ctor: '_Tuple2',
+				_0: _elm_lang$core$Native_Utils.eq(
+					_p7.dragging,
+					_elm_lang$core$Maybe$Just(id)),
+				_1: _p8.placeholderView
+			};
+			if (((_p4.ctor === '_Tuple2') && (_p4._0 === true)) && (_p4._1.ctor === 'Just')) {
+				return _p4._1._0(data);
+			} else {
+				return A2(
+					_p8.itemView,
+					_user$project$Reorderable$ignoreDrag(_p8.toMsg),
+					data);
+			}
+		}();
 		return {
 			ctor: '_Tuple2',
 			_0: id,
@@ -9197,85 +9189,138 @@ var _user$project$Reorderable$liView = F4(
 				_elm_lang$core$Native_List.fromArray(
 					[
 						_elm_lang$html$Html_Attributes$draggable(
-						_elm_lang$core$Basics$toString(_p11.draggable)),
+						_elm_lang$core$Basics$toString(_p8.draggable)),
 						A3(
 						_elm_lang$html$Html_Events$onWithOptions,
 						'dragstart',
-						{stopPropagation: _p10.mouseOverIgnored, preventDefault: _p10.mouseOverIgnored},
+						{stopPropagation: _p7.mouseOverIgnored, preventDefault: _p7.mouseOverIgnored},
 						_elm_lang$core$Json_Decode$succeed(
-							_p11.toMsg(
+							_p8.toMsg(
 								_user$project$Reorderable$StartDragging(id)))),
 						A2(
 						_elm_lang$html$Html_Events$on,
 						'dragend',
 						_elm_lang$core$Json_Decode$succeed(
-							_p11.toMsg(_user$project$Reorderable$StopDragging))),
+							_p8.toMsg(_user$project$Reorderable$StopDragging))),
 						A2(
 						_elm_lang$html$Html_Events$on,
 						'dragenter',
 						_elm_lang$core$Json_Decode$succeed(
-							_p11.updateList(
-								function (_p8) {
-									var _p9 = _p8;
-									return A4(_user$project$Reorderable_Helpers$updateList, _p11.toId, id, _p10.dragging, list);
+							_p8.updateList(
+								function (_p5) {
+									var _p6 = _p5;
+									return A4(_user$project$Reorderable_Helpers$updateList, _p8.toId, id, _p7.dragging, list);
 								}))),
-						_elm_lang$html$Html_Attributes$class(itemClass)
+						_elm_lang$html$Html_Attributes$class(_p8.itemClass)
 					]),
 				_elm_lang$core$Native_List.fromArray(
-					[
-						A2(
-						_p11.itemView,
-						_user$project$Reorderable$ignoreDrag(_p11.toMsg),
-						data)
-					]))
+					[childView]))
 		};
 	});
 var _user$project$Reorderable$ol = F3(
-	function (_p12, state, list) {
-		var _p13 = _p12;
+	function (_p9, state, list) {
+		var _p10 = _p9;
 		return A2(
 			_elm_lang$html$Html_Keyed$ol,
 			_elm_lang$core$Native_List.fromArray(
 				[
-					_elm_lang$html$Html_Attributes$class(_p13._0.listClass)
+					_elm_lang$html$Html_Attributes$class(_p10._0.listClass)
 				]),
 			A2(
 				_elm_lang$core$List$map,
-				A3(_user$project$Reorderable$liView, _p13, list, state),
+				A3(_user$project$Reorderable$liView, _p10, list, state),
 				list));
 	});
 var _user$project$Reorderable$ul = F3(
-	function (_p14, state, list) {
-		var _p15 = _p14;
+	function (_p11, state, list) {
+		var _p12 = _p11;
 		return A2(
 			_elm_lang$html$Html_Keyed$ul,
 			_elm_lang$core$Native_List.fromArray(
 				[
-					_elm_lang$html$Html_Attributes$class(_p15._0.listClass)
+					_elm_lang$html$Html_Attributes$class(_p12._0.listClass)
 				]),
 			A2(
 				_elm_lang$core$List$map,
-				A3(_user$project$Reorderable$liView, _p15, list, state),
+				A3(_user$project$Reorderable$liView, _p12, list, state),
 				list));
+	});
+var _user$project$Reorderable$DragEnd = {ctor: 'DragEnd'};
+var _user$project$Reorderable$DragStart = function (a) {
+	return {ctor: 'DragStart', _0: a};
+};
+var _user$project$Reorderable$update = F2(
+	function (msg, _p13) {
+		var _p14 = _p13;
+		var _p17 = _p14._0;
+		var _p15 = msg;
+		switch (_p15.ctor) {
+			case 'MouseOverIgnored':
+				return {
+					ctor: '_Tuple2',
+					_0: _user$project$Reorderable$State(
+						_elm_lang$core$Native_Utils.update(
+							_p17,
+							{mouseOverIgnored: _p15._0})),
+					_1: _elm_lang$core$Maybe$Nothing
+				};
+			case 'StartDragging':
+				var _p16 = _p15._0;
+				var dragging = _p17.mouseOverIgnored ? _elm_lang$core$Maybe$Nothing : _elm_lang$core$Maybe$Just(_p16);
+				return {
+					ctor: '_Tuple2',
+					_0: _user$project$Reorderable$State(
+						_elm_lang$core$Native_Utils.update(
+							_p17,
+							{dragging: dragging})),
+					_1: _elm_lang$core$Maybe$Just(
+						_user$project$Reorderable$DragStart(_p16))
+				};
+			default:
+				return {
+					ctor: '_Tuple2',
+					_0: _user$project$Reorderable$State(
+						_elm_lang$core$Native_Utils.update(
+							_p17,
+							{dragging: _elm_lang$core$Maybe$Nothing})),
+					_1: _elm_lang$core$Maybe$Just(_user$project$Reorderable$DragEnd)
+				};
+		}
 	});
 var _user$project$Reorderable$Config = function (a) {
 	return {ctor: 'Config', _0: a};
 };
-var _user$project$Reorderable$simpleConfig = function (_p16) {
-	var _p17 = _p16;
+var _user$project$Reorderable$simpleConfig = function (_p18) {
+	var _p19 = _p18;
 	return _user$project$Reorderable$Config(
 		{
 			toId: _elm_lang$core$Basics$identity,
-			toMsg: _p17.toMsg,
+			toMsg: _p19.toMsg,
 			itemView: _elm_lang$core$Basics$always(_elm_lang$html$Html$text),
 			listClass: '',
 			itemClass: '',
 			placeholderClass: '',
+			placeholderView: _elm_lang$core$Maybe$Nothing,
 			draggable: true,
-			updateList: _p17.updateList
+			updateList: _p19.updateList
 		});
 };
 var _user$project$Reorderable$fullConfig = _user$project$Reorderable$Config;
+var _user$project$Todo_ops = _user$project$Todo_ops || {};
+_user$project$Todo_ops['=>'] = F2(
+	function (v0, v1) {
+		return {ctor: '_Tuple2', _0: v0, _1: v1};
+	});
+var _user$project$Todo$placeholderView = function (_p0) {
+	return A2(
+		_elm_lang$html$Html$div,
+		_elm_lang$core$Native_List.fromArray(
+			[]),
+		_elm_lang$core$Native_List.fromArray(
+			[
+				_elm_lang$html$Html$text('dragging!')
+			]));
+};
 var _user$project$Todo$updateAction = F3(
 	function (id, action, todos) {
 		return A2(
@@ -9300,20 +9345,21 @@ var _user$project$Todo$updateDone = F3(
 	});
 var _user$project$Todo$update = F2(
 	function (msg, model) {
-		var _p0 = A2(_elm_lang$core$Debug$log, 'Current Message', msg);
-		switch (_p0.ctor) {
+		var _p1 = A2(_elm_lang$core$Debug$log, 'Current Message', msg);
+		switch (_p1.ctor) {
 			case 'UpdateDone':
-				var newTodos = A3(_user$project$Todo$updateDone, _p0._0, _p0._1, model.todos);
+				var newTodos = A3(_user$project$Todo$updateDone, _p1._0, _p1._1, model.todos);
 				return _elm_lang$core$Native_Utils.update(
 					model,
 					{todos: newTodos});
 			case 'UpdateEntry':
-				var newTodos = A3(_user$project$Todo$updateAction, _p0._0, _p0._1, model.todos);
+				var newTodos = A3(_user$project$Todo$updateAction, _p1._0, _p1._1, model.todos);
 				return _elm_lang$core$Native_Utils.update(
 					model,
 					{todos: newTodos});
 			case 'ReorderableMsg':
-				var newReordableState = A2(_user$project$Reorderable$update, _p0._0, model.reorderableState);
+				var _p2 = A2(_user$project$Reorderable$update, _p1._0, model.reorderableState);
+				var newReordableState = _p2._0;
 				return _elm_lang$core$Native_Utils.update(
 					model,
 					{reorderableState: newReordableState});
@@ -9321,7 +9367,7 @@ var _user$project$Todo$update = F2(
 				return _elm_lang$core$Native_Utils.update(
 					model,
 					{
-						todos: _p0._0(
+						todos: _p1._0(
 							{ctor: '_Tuple0'})
 					});
 		}
@@ -9363,16 +9409,24 @@ var _user$project$Todo$UpdateDone = F2(
 		return {ctor: 'UpdateDone', _0: a, _1: b};
 	});
 var _user$project$Todo$todoView = F2(
-	function (ignoreDrag, _p1) {
-		var _p2 = _p1;
-		var _p4 = _p2.id;
-		var _p3 = _p2.done;
+	function (ignoreDrag, _p3) {
+		var _p4 = _p3;
+		var _p6 = _p4.id;
+		var _p5 = _p4.done;
 		return A2(
 			_elm_lang$html$Html$div,
 			_elm_lang$core$Native_List.fromArray(
 				[]),
 			_elm_lang$core$Native_List.fromArray(
 				[
+					A2(
+					_elm_lang$html$Html$div,
+					_elm_lang$core$Native_List.fromArray(
+						[
+							_elm_lang$html$Html_Attributes$class('todo-list__item__handle')
+						]),
+					_elm_lang$core$Native_List.fromArray(
+						[])),
 					A2(
 					_elm_lang$html$Html$input,
 					_elm_lang$core$Native_List.fromArray(
@@ -9381,10 +9435,10 @@ var _user$project$Todo$todoView = F2(
 							_elm_lang$html$Html_Events$onClick(
 							A2(
 								_user$project$Todo$UpdateDone,
-								_p4,
-								_elm_lang$core$Basics$not(_p3))),
+								_p6,
+								_elm_lang$core$Basics$not(_p5))),
 							_elm_lang$html$Html_Attributes$value(
-							_elm_lang$core$Basics$toString(_p3))
+							_elm_lang$core$Basics$toString(_p5))
 						]),
 					_elm_lang$core$Native_List.fromArray(
 						[])),
@@ -9395,32 +9449,57 @@ var _user$project$Todo$todoView = F2(
 						[
 							_elm_lang$html$Html_Attributes$type$('text'),
 							_elm_lang$html$Html_Events$onInput(
-							_user$project$Todo$UpdateEntry(_p4)),
-							_elm_lang$html$Html_Attributes$value(_p2.action)
+							_user$project$Todo$UpdateEntry(_p6)),
+							_elm_lang$html$Html_Attributes$value(_p4.action)
 						]),
 					_elm_lang$core$Native_List.fromArray(
 						[]))
 				]));
 	});
-var _user$project$Todo$view = function (_p5) {
-	var _p6 = _p5;
-	return A3(
-		_user$project$Reorderable$ul,
-		_user$project$Reorderable$fullConfig(
-			{
-				toId: function (_) {
-					return _.id;
-				},
-				toMsg: _user$project$Todo$ReorderableMsg,
-				draggable: true,
-				updateList: _user$project$Todo$ReorderList,
-				itemView: _user$project$Todo$todoView,
-				itemClass: '',
-				listClass: '',
-				placeholderClass: ''
-			}),
-		_p6.reorderableState,
-		_p6.todos);
+var _user$project$Todo$view = function (_p7) {
+	var _p8 = _p7;
+	return A2(
+		_elm_lang$html$Html$div,
+		_elm_lang$core$Native_List.fromArray(
+			[]),
+		_elm_lang$core$Native_List.fromArray(
+			[
+				A2(
+				_elm_lang$html$Html$h1,
+				_elm_lang$core$Native_List.fromArray(
+					[]),
+				_elm_lang$core$Native_List.fromArray(
+					[
+						_elm_lang$html$Html$text('Re-orderable Todo List')
+					])),
+				A2(
+				_elm_lang$html$Html$div,
+				_elm_lang$core$Native_List.fromArray(
+					[
+						_elm_lang$html$Html_Attributes$class('container')
+					]),
+				_elm_lang$core$Native_List.fromArray(
+					[
+						A3(
+						_user$project$Reorderable$ul,
+						_user$project$Reorderable$fullConfig(
+							{
+								toId: function (_) {
+									return _.id;
+								},
+								toMsg: _user$project$Todo$ReorderableMsg,
+								draggable: true,
+								updateList: _user$project$Todo$ReorderList,
+								itemView: _user$project$Todo$todoView,
+								placeholderView: _elm_lang$core$Maybe$Just(_user$project$Todo$placeholderView),
+								listClass: 'todo-list',
+								itemClass: 'todo-list__item',
+								placeholderClass: 'todo-list__placeholder'
+							}),
+						_p8.reorderableState,
+						_p8.todos)
+					]))
+			]));
 };
 var _user$project$Todo$main = {
 	main: _elm_lang$html$Html_App$beginnerProgram(
