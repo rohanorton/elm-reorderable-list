@@ -147,13 +147,13 @@ liView (Config config) list (State state) data =
         id =
             config.toId data
 
-        childView =
+        ( childView, childClass ) =
             case ( state.dragging == Just id, config.placeholderView ) of
                 ( True, Just placeholderView ) ->
-                    placeholderView data
+                    ( placeholderView data, config.placeholderClass )
 
                 _ ->
-                    config.itemView (ignoreDrag config.toMsg) data
+                    ( config.itemView (ignoreDrag config.toMsg) data, config.itemClass )
     in
         ( id
         , li
@@ -169,7 +169,7 @@ liView (Config config) list (State state) data =
                 <| Json.succeed
                 <| config.updateList
                 <| (\() -> Helpers.updateList config.toId id state.dragging list)
-            , class config.itemClass
+            , class childClass
             ]
             [ childView ]
         )
