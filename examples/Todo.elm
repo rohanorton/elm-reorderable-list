@@ -1,7 +1,7 @@
 module Todo exposing (..)
 
 import Html exposing (..)
-import Html.Attributes exposing (class, type', value)
+import Html.Attributes exposing (class, type', value, checked)
 import Html.Events exposing (on, onClick, onInput, keyCode)
 import Html.App
 import Json.Decode as Json
@@ -199,7 +199,7 @@ taskView ignoreDrag { id, action, done } =
         , input
             [ type' "checkbox"
             , onClick <| UpdateDone id (not done)
-            , value <| toString done
+            , checked done
             ]
             []
           {- Selecting text inside input shouldn't begin drag, so using the
