@@ -1,7 +1,7 @@
 module Todo exposing (..)
 
 import Html exposing (..)
-import Html.Attributes exposing (class, type', value, checked)
+import Html.Attributes exposing (class, type', value, checked, readonly)
 import Html.Events exposing (on, onClick, onInput, keyCode)
 import Html.App
 import Json.Decode as Json
@@ -159,7 +159,7 @@ view : Model -> Html Msg
 view { newTask, todos, reorderableState } =
     div []
         [ h1 [] [ text "Re-orderable Todo List" ]
-        , div [ class "container" ]
+        , div [ class "todo-list__container" ]
             [ newTaskView newTask
             , Reorderable.ul
                 (Reorderable.fullConfig
@@ -209,6 +209,7 @@ taskView ignoreDrag { id, action, done } =
             [ type' "text"
             , onInput <| UpdateEntry id
             , value action
+            , readonly done
             ]
             []
         ]
