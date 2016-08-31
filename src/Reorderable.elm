@@ -148,12 +148,10 @@ liView (Config config) list (State state) data =
             config.toId data
 
         ( childView, childClass ) =
-            case ( state.dragging == Just id, config.placeholderView ) of
-                ( True, Just placeholderView ) ->
-                    ( placeholderView data, config.placeholderClass )
-
-                _ ->
-                    ( config.itemView (ignoreDrag config.toMsg) data, config.itemClass )
+            if state.dragging == Just id then
+                ( config.placeholderView data, config.placeholderClass )
+            else
+                ( config.itemView (ignoreDrag config.toMsg) data, config.itemClass )
     in
         ( id
         , li
@@ -200,7 +198,7 @@ type Config data msg
         { toId : data -> String
         , toMsg : Msg -> msg
         , itemView : HtmlWrapper msg -> data -> Html msg
-        , placeholderView : Maybe (data -> Html msg)
+        , placeholderView : data -> Html msg
         , listClass : String
         , itemClass : String
         , placeholderClass : String
@@ -237,7 +235,7 @@ simpleConfig { toMsg, updateList } =
         , listClass = ""
         , itemClass = ""
         , placeholderClass = ""
-        , placeholderView = Nothing
+        , placeholderView = text
         , draggable = True
         , updateList = updateList
         }
@@ -254,7 +252,7 @@ fullConfig :
     { toId : data -> String
     , toMsg : Msg -> msg
     , itemView : HtmlWrapper msg -> data -> Html msg
-    , placeholderView : Maybe (data -> Html msg)
+    , placeholderView : data -> Html msg
     , listClass : String
     , itemClass : String
     , placeholderClass : String
