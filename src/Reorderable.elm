@@ -156,21 +156,32 @@ liView (Config config) list (State state) data =
         ( id
         , li
             [ draggable <| toString config.draggable
-            , onWithOptions "dragstart"
-                { stopPropagation = state.mouseOverIgnored
-                , preventDefault = state.mouseOverIgnored
-                }
-                <| Json.succeed
-                <| config.toMsg (StartDragging id)
-            , on "dragend" <| Json.succeed <| config.toMsg <| StopDragging
-            , on "dragenter"
-                <| Json.succeed
-                <| config.updateList
-                <| (\() -> Helpers.updateList config.toId id state.dragging list)
+            , onDragStart state.mouseOverIgnored <| config.toMsg (StartDragging id)
+            , onDragEnd <| config.toMsg StopDragging
+            , onDragEnter <| config.updateList (\() -> Helpers.updateList config.toId id state.dragging list)
             , class childClass
             ]
             [ childView ]
         )
+
+
+onDragStart : Bool -> msg -> Attribute msg
+onDragStart ignored msg =
+    onWithOptions "dragstart"
+        { stopPropagation = ignored
+        , preventDefault = ignored
+        }
+        <| Json.succeed msg
+
+
+onDragEnd : msg -> Attribute msg
+onDragEnd msg =
+    on "dragend" <| Json.succeed msg
+
+
+onDragEnter : msg -> Attribute msg
+onDragEnter msg =
+    on "dragenter" <| Json.succeed msg
 
 
 ignoreDrag : (Msg -> msg) -> HtmlWrapper msg
