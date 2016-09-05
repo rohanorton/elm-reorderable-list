@@ -6,6 +6,7 @@ module Reorderable
         , initialState
         , Msg
         , update
+        , subscriptions
         , Config
         , HtmlWrapper
         , simpleConfig
@@ -33,11 +34,13 @@ Check out the [examples][] to see how it works
 -}
 
 import Html exposing (li, text, Html, Attribute)
+import Html.Lazy as Lazy
 import Html.Keyed as Keyed
-import Html.Attributes exposing (draggable, class)
+import Html.Attributes exposing (class, style)
 import Html.Events exposing (on, onWithOptions)
 import Json.Decode as Json
 import Reorderable.Helpers as Helpers
+import Mouse exposing (Position)
 
 
 -- MODEL
@@ -50,9 +53,16 @@ element.
 -}
 type State
     = State
-        { dragging : Maybe String
+        { dragging : Maybe Draggable
         , mouseOverIgnored : Bool
         }
+
+
+type alias Draggable =
+    { id : String
+    , start : Position
+    , current : Position
+    }
 
 
 {-| Create the inital state for your re-orderable component.
@@ -73,9 +83,9 @@ initialState =
 component state.
 -}
 type Msg
-    = MouseOverIgnored Bool
-    | StartDragging String
-    | StopDragging
+    = InternalDragStart String Position
+    | InternalDragMove Position
+    | InternalDragEnd
 
 
 {-|
@@ -90,26 +100,28 @@ type Event
 update : Msg -> State -> ( State, Maybe Event )
 update msg (State state) =
     case msg of
-        MouseOverIgnored mouseOverIgnored ->
-            ( State { state | mouseOverIgnored = mouseOverIgnored }
-            , Nothing
-            )
-
-        StartDragging id ->
+        InternalDragStart id xy ->
             let
                 dragging =
-                    if state.mouseOverIgnored then
-                        Nothing
-                    else
-                        Just id
+                    Draggable id xy xy
             in
-                ( State { state | dragging = dragging }
+                ( State { state | dragging = Just dragging }
                 , Just <| DragStart id
                 )
 
-        StopDragging ->
+        InternalDragMove xy ->
+            let
+                dragging =
+                    state.dragging
+                        |> Maybe.map (\draggable -> { draggable | current = xy })
+            in
+                ( State { state | dragging = dragging }
+                , Nothing
+                )
+
+        InternalDragEnd ->
             ( State { state | dragging = Nothing }
-            , Just DragEnd
+            , Just <| DragEnd
             )
 
 
@@ -142,57 +154,98 @@ ul ((Config { listClass }) as config) state list =
 
 
 liView : Config data msg -> List data -> State -> data -> ( String, Html msg )
-liView (Config config) list (State state) data =
+liView ((Config { toId }) as config) list (State state) data =
     let
         id =
-            config.toId data
+            toId data
 
-        ( childView, childClass ) =
-            if state.dragging == Just id then
-                ( config.placeholderView data, config.placeholderClass )
-            else
-                ( config.itemView (ignoreDrag config.toMsg) data, config.itemClass )
+        currentView =
+            case state.dragging of
+                Just draggable ->
+                    if draggable.id == id then
+                        Lazy.lazy3 draggingView config data draggable
+                    else
+                        Lazy.lazy3 nonDraggingView config data id
+
+                Nothing ->
+                    Lazy.lazy3 nonDraggingView config data id
     in
-        ( id
-        , li
-            [ draggable <| toString config.draggable
-            , onDragStart state.mouseOverIgnored <| config.toMsg (StartDragging id)
-            , onDragEnd <| config.toMsg StopDragging
-            , onDragEnter <| config.updateList (\() -> Helpers.updateList config.toId id state.dragging list)
-            , class childClass
+        ( id, currentView )
+
+
+nonDraggingView : Config data msg -> data -> String -> Html msg
+nonDraggingView (Config config) data id =
+    li
+        ([]
+            ++ (onDragStart <| Json.map (config.toMsg << InternalDragStart id) positionDecoder)
+        )
+        [ config.itemView data ]
+
+
+draggingView : Config data msg -> data -> Draggable -> Html msg
+draggingView (Config config) data draggable =
+    let
+        { x, y } =
+            getPosition draggable
+    in
+        li
+            [ style
+                [ "position" => "relative"
+                , "display" => "block"
+                , "left" => px x
+                , "top" => px y
+                ]
             ]
-            [ childView ]
-        )
+            [ config.itemView data ]
 
 
-onDragStart : Bool -> msg -> Attribute msg
-onDragStart ignored msg =
-    onWithOptions "dragstart"
-        { stopPropagation = ignored
-        , preventDefault = ignored
-        }
-        <| Json.succeed msg
+subscriptions : (Msg -> msg) -> State -> Sub msg
+subscriptions toMsg (State state) =
+    case state.dragging of
+        Nothing ->
+            Sub.batch []
+
+        Just draggable ->
+            Sub.batch
+                [ Mouse.moves (\xy -> toMsg <| InternalDragMove xy)
+                , Mouse.ups (\xy -> toMsg InternalDragEnd)
+                ]
 
 
-onDragEnd : msg -> Attribute msg
-onDragEnd msg =
-    on "dragend" <| Json.succeed msg
+getPosition : Draggable -> Position
+getPosition { start, current } =
+    { x = current.x - start.x
+    , y = current.y - start.y
+    }
 
 
-onDragEnter : msg -> Attribute msg
-onDragEnter msg =
-    on "dragenter" <| Json.succeed msg
+onMulti : List String -> Json.Decoder msg -> List (Attribute msg)
+onMulti events decoder =
+    let
+        handler event =
+            on event decoder
+    in
+        List.map handler events
 
 
-ignoreDrag : (Msg -> msg) -> HtmlWrapper msg
-ignoreDrag toMsg elem attr children =
-    elem
-        (attr
-            ++ [ on "mouseenter" <| Json.succeed <| toMsg <| MouseOverIgnored True
-               , on "mouseleave" <| Json.succeed <| toMsg <| MouseOverIgnored False
-               ]
-        )
-        children
+onDragStart : Json.Decoder msg -> List (Attribute msg)
+onDragStart =
+    onMulti [ "mousedown" ]
+
+
+onDragMove : Json.Decoder msg -> List (Attribute msg)
+onDragMove =
+    onMulti [ "mousemove" ]
+
+
+onDragEnd : Json.Decoder msg -> List (Attribute msg)
+onDragEnd =
+    onMulti [ "mouseup", "mouseleave", "mousecancel" ]
+
+
+positionDecoder : Json.Decoder Position
+positionDecoder =
+    Mouse.position
 
 
 
@@ -208,7 +261,7 @@ type Config data msg
     = Config
         { toId : data -> String
         , toMsg : Msg -> msg
-        , itemView : HtmlWrapper msg -> data -> Html msg
+        , itemView : data -> Html msg
         , placeholderView : data -> Html msg
         , listClass : String
         , itemClass : String
@@ -242,7 +295,7 @@ simpleConfig { toMsg, updateList } =
     Config
         { toId = identity
         , toMsg = toMsg
-        , itemView = always text
+        , itemView = text
         , listClass = ""
         , itemClass = ""
         , placeholderClass = ""
@@ -262,7 +315,7 @@ time.
 fullConfig :
     { toId : data -> String
     , toMsg : Msg -> msg
-    , itemView : HtmlWrapper msg -> data -> Html msg
+    , itemView : data -> Html msg
     , placeholderView : data -> Html msg
     , listClass : String
     , itemClass : String
@@ -273,3 +326,17 @@ fullConfig :
     -> Config data msg
 fullConfig =
     Config
+
+
+
+-- CSS Helpers
+
+
+(=>) : String -> String -> ( String, String )
+(=>) =
+    (,)
+
+
+px : number -> String
+px num =
+    (toString num) ++ "px"

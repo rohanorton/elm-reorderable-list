@@ -10,10 +10,11 @@ import Reorderable
 
 main : Program Never
 main =
-    Html.App.beginnerProgram
-        { model = init
+    Html.App.program
+        { init = init
         , view = view
         , update = update
+        , subscriptions = subscriptions
         }
 
 
@@ -56,13 +57,14 @@ initialTodos =
     ]
 
 
-init : Model
+init : ( Model, Cmd Msg )
 init =
     { todos = initialTodos
     , reorderableState = Reorderable.initialState
     , newTask = ""
     , nextId = 4
     }
+        ! []
 
 
 
@@ -79,11 +81,11 @@ type Msg
     | NoOp
 
 
-update : Msg -> Model -> Model
+update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    case Debug.log "Current Message" msg of
+    case msg of
         UpdateNewTaskInput newTask ->
-            { model | newTask = newTask }
+            { model | newTask = newTask } ! []
 
         AddTask ->
             let
@@ -98,33 +100,34 @@ update msg model =
                     , nextId = model.nextId + 1
                     , todos = model.todos ++ [ newTodo ]
                 }
+                    ! []
 
         UpdateDone id done ->
             let
                 newTodos =
                     updateDone id done model.todos
             in
-                { model | todos = newTodos }
+                { model | todos = newTodos } ! []
 
         UpdateEntry id newAction ->
             let
                 newTodos =
                     updateAction id newAction model.todos
             in
-                { model | todos = newTodos }
+                { model | todos = newTodos } ! []
 
         ReorderableMsg childMsg ->
             let
                 ( newReordableState, _ ) =
                     Reorderable.update childMsg model.reorderableState
             in
-                { model | reorderableState = newReordableState }
+                { model | reorderableState = newReordableState } ! []
 
         ReorderList newTodosThunk ->
-            { model | todos = newTodosThunk () }
+            { model | todos = newTodosThunk () } ! []
 
         NoOp ->
-            model
+            model ! []
 
 
 updateDone : String -> Bool -> Todos -> Todos
@@ -149,6 +152,15 @@ updateAction id action todos =
                 todo
         )
         todos
+
+
+
+-- SUBSCRIPTIONS
+
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    Reorderable.subscriptions ReorderableMsg model.reorderableState
 
 
 
@@ -192,8 +204,8 @@ newTaskView newTask =
         []
 
 
-taskView : Reorderable.HtmlWrapper Msg -> Todo -> Html Msg
-taskView ignoreDrag { id, action, done } =
+taskView : Todo -> Html Msg
+taskView { id, action, done } =
     div []
         [ div [ class "todo-list__item__handle" ] []
         , input
@@ -205,7 +217,7 @@ taskView ignoreDrag { id, action, done } =
           {- Selecting text inside input shouldn't begin drag, so using the
              ignoreDrag function to prevent:
           -}
-        , ignoreDrag input
+        , input
             [ type' "text"
             , onInput <| UpdateEntry id
             , value action
