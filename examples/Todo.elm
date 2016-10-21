@@ -75,7 +75,7 @@ type Msg
     | UpdateDone String Bool
     | UpdateEntry String String
     | ReorderableMsg Reorderable.Msg
-    | ReorderList (() -> List Todo)
+    | ReorderList (List Todo)
     | NoOp
 
 
@@ -120,8 +120,8 @@ update msg model =
             in
                 { model | reorderableState = newReordableState }
 
-        ReorderList newTodosThunk ->
-            { model | todos = newTodosThunk () }
+        ReorderList newTodos ->
+            { model | todos = newTodos }
 
         NoOp ->
             model

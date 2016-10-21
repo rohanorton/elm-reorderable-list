@@ -158,7 +158,7 @@ liView (Config config) list (State state) data =
             [ draggable <| toString config.draggable
             , onDragStart state.mouseOverIgnored <| config.toMsg (StartDragging id)
             , onDragEnd <| config.toMsg StopDragging
-            , onDragEnter <| config.updateList (\() -> Helpers.updateList config.toId id state.dragging list)
+            , onDragEnter config.updateList (\() -> Helpers.updateList config.toId id state.dragging list)
             , class childClass
             ]
             [ childView ]
@@ -179,9 +179,9 @@ onDragEnd msg =
     on "dragend" <| Json.succeed msg
 
 
-onDragEnter : msg -> Attribute msg
-onDragEnter msg =
-    on "dragenter" <| Json.succeed msg
+onDragEnter : (List a -> msg) -> (() -> List a) -> Attribute msg
+onDragEnter updateList listThunk =
+    on "dragenter" <| Json.customDecoder (Json.succeed ()) (\_ -> Ok <| updateList <| listThunk ())
 
 
 ignoreDrag : (Msg -> msg) -> HtmlWrapper msg
@@ -214,7 +214,7 @@ type Config data msg
         , itemClass : String
         , placeholderClass : String
         , draggable : Bool
-        , updateList : (() -> List data) -> msg
+        , updateList : List data -> msg
         }
 
 
@@ -237,7 +237,7 @@ For creating a basic reorderable ul or ol from a list of strings. It's
 painfully simple and probably a bit useless!
 
 -}
-simpleConfig : { toMsg : Msg -> msg, updateList : (() -> List String) -> msg } -> Config String msg
+simpleConfig : { toMsg : Msg -> msg, updateList : List String -> msg } -> Config String msg
 simpleConfig { toMsg, updateList } =
     Config
         { toId = identity
@@ -268,7 +268,7 @@ fullConfig :
     , itemClass : String
     , placeholderClass : String
     , draggable : Bool
-    , updateList : (() -> List data) -> msg
+    , updateList : List data -> msg
     }
     -> Config data msg
 fullConfig =

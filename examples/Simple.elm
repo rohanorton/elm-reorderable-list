@@ -39,7 +39,7 @@ init =
 
 type Msg
     = ReorderableMsg Reorderable.Msg
-    | UpdateList (() -> List String)
+    | UpdateList (List String)
 
 
 update : Msg -> Model -> Model
@@ -47,13 +47,13 @@ update msg model =
     case Debug.log "Current Message" msg of
         ReorderableMsg childMsg ->
             let
-                newReordableState =
+                ( newReordableState, _ ) =
                     Reorderable.update childMsg model.reorderableState
             in
                 { model | reorderableState = newReordableState }
 
-        UpdateList newListThunk ->
-            { model | list = newListThunk () }
+        UpdateList newList ->
+            { model | list = newList }
 
 
 
