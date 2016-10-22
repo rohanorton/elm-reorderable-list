@@ -147,32 +147,41 @@ liView (Config config) list (State state) data =
         id =
             config.toId data
 
-        childView =
-            case ( state.dragging == Just id, config.placeholderView ) of
-                ( True, Just placeholderView ) ->
-                    placeholderView data
-
-                _ ->
-                    config.itemView (ignoreDrag config.toMsg) data
+        ( childView, childClass ) =
+            if state.dragging == Just id then
+                ( config.placeholderView data, config.placeholderClass )
+            else
+                ( config.itemView (ignoreDrag config.toMsg) data, config.itemClass )
     in
         ( id
         , li
             [ draggable <| toString config.draggable
-            , onWithOptions "dragstart"
-                { stopPropagation = state.mouseOverIgnored
-                , preventDefault = state.mouseOverIgnored
-                }
-                <| Json.succeed
-                <| config.toMsg (StartDragging id)
-            , on "dragend" <| Json.succeed <| config.toMsg <| StopDragging
-            , on "dragenter"
-                <| Json.succeed
-                <| config.updateList
-                <| (\() -> Helpers.updateList config.toId id state.dragging list)
-            , class config.itemClass
+            , onDragStart state.mouseOverIgnored <| config.toMsg (StartDragging id)
+            , onDragEnd <| config.toMsg StopDragging
+            , onDragEnter config.updateList (\() -> Helpers.updateList config.toId id state.dragging list)
+            , class childClass
             ]
             [ childView ]
         )
+
+
+onDragStart : Bool -> msg -> Attribute msg
+onDragStart ignored msg =
+    onWithOptions "dragstart"
+        { stopPropagation = ignored
+        , preventDefault = ignored
+        }
+        <| Json.succeed msg
+
+
+onDragEnd : msg -> Attribute msg
+onDragEnd msg =
+    on "dragend" <| Json.succeed msg
+
+
+onDragEnter : (List a -> msg) -> (() -> List a) -> Attribute msg
+onDragEnter updateList listThunk =
+    on "dragenter" <| Json.customDecoder (Json.succeed ()) (\_ -> Ok <| updateList <| listThunk ())
 
 
 ignoreDrag : (Msg -> msg) -> HtmlWrapper msg
@@ -200,12 +209,12 @@ type Config data msg
         { toId : data -> String
         , toMsg : Msg -> msg
         , itemView : HtmlWrapper msg -> data -> Html msg
-        , placeholderView : Maybe (data -> Html msg)
+        , placeholderView : data -> Html msg
         , listClass : String
         , itemClass : String
         , placeholderClass : String
         , draggable : Bool
-        , updateList : (() -> List data) -> msg
+        , updateList : List data -> msg
         }
 
 
@@ -228,7 +237,7 @@ For creating a basic reorderable ul or ol from a list of strings. It's
 painfully simple and probably a bit useless!
 
 -}
-simpleConfig : { toMsg : Msg -> msg, updateList : (() -> List String) -> msg } -> Config String msg
+simpleConfig : { toMsg : Msg -> msg, updateList : List String -> msg } -> Config String msg
 simpleConfig { toMsg, updateList } =
     Config
         { toId = identity
@@ -237,7 +246,7 @@ simpleConfig { toMsg, updateList } =
         , listClass = ""
         , itemClass = ""
         , placeholderClass = ""
-        , placeholderView = Nothing
+        , placeholderView = text
         , draggable = True
         , updateList = updateList
         }
@@ -254,12 +263,12 @@ fullConfig :
     { toId : data -> String
     , toMsg : Msg -> msg
     , itemView : HtmlWrapper msg -> data -> Html msg
-    , placeholderView : Maybe (data -> Html msg)
+    , placeholderView : data -> Html msg
     , listClass : String
     , itemClass : String
     , placeholderClass : String
     , draggable : Bool
-    , updateList : (() -> List data) -> msg
+    , updateList : List data -> msg
     }
     -> Config data msg
 fullConfig =
