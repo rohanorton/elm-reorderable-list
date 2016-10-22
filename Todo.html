@@ -9103,23 +9103,57 @@ var _user$project$Reorderable_Helpers$moveTo = F3(
 	});
 var _user$project$Reorderable_Helpers$updateList = F4(
 	function (toId, overId, dragging, list) {
-		var indexEqualTo = function (id) {
-			return A2(
-				_elm_lang$core$Maybe$withDefault,
-				0,
-				A2(
-					_elm_community$list_extra$List_Extra$findIndex,
-					function (a) {
-						return _elm_lang$core$Native_Utils.eq(
-							toId(a),
-							id);
-					},
-					list));
-		};
-		var overIndex = indexEqualTo(overId);
-		var draggedId = A2(_elm_lang$core$Maybe$withDefault, '', dragging);
-		var draggedIndex = indexEqualTo(draggedId);
-		return A3(_user$project$Reorderable_Helpers$moveTo, draggedIndex, overIndex, list);
+		var _p1 = dragging;
+		if (_p1.ctor === 'Nothing') {
+			return list;
+		} else {
+			var indexEqualTo = function (id) {
+				return A2(
+					_elm_lang$core$Maybe$withDefault,
+					0,
+					A2(
+						_elm_community$list_extra$List_Extra$findIndex,
+						function (a) {
+							return _elm_lang$core$Native_Utils.eq(
+								toId(a),
+								id);
+						},
+						list));
+			};
+			var overIndex = indexEqualTo(overId);
+			var draggedIndex = indexEqualTo(_p1._0);
+			return A3(_user$project$Reorderable_Helpers$moveTo, draggedIndex, overIndex, list);
+		}
+	});
+var _user$project$Reorderable$onDragEnter = F2(
+	function (updateList, listThunk) {
+		return A2(
+			_elm_lang$html$Html_Events$on,
+			'dragenter',
+			A2(
+				_elm_lang$core$Json_Decode$customDecoder,
+				_elm_lang$core$Json_Decode$succeed(
+					{ctor: '_Tuple0'}),
+				function (_p0) {
+					return _elm_lang$core$Result$Ok(
+						updateList(
+							listThunk(
+								{ctor: '_Tuple0'})));
+				}));
+	});
+var _user$project$Reorderable$onDragEnd = function (msg) {
+	return A2(
+		_elm_lang$html$Html_Events$on,
+		'dragend',
+		_elm_lang$core$Json_Decode$succeed(msg));
+};
+var _user$project$Reorderable$onDragStart = F2(
+	function (ignored, msg) {
+		return A3(
+			_elm_lang$html$Html_Events$onWithOptions,
+			'dragstart',
+			{stopPropagation: ignored, preventDefault: ignored},
+			_elm_lang$core$Json_Decode$succeed(msg));
 	});
 var _user$project$Reorderable$State = function (a) {
 	return {ctor: 'State', _0: a};
@@ -9158,39 +9192,28 @@ var _user$project$Reorderable$ignoreDrag = F4(
 			children);
 	});
 var _user$project$Reorderable$liView = F4(
-	function (_p1, list, _p0, data) {
-		var _p2 = _p1;
-		var _p9 = _p2._0;
-		var _p3 = _p0;
-		var _p8 = _p3._0;
+	function (_p2, list, _p1, data) {
+		var _p3 = _p2;
+		var _p9 = _p3._0;
+		var _p4 = _p1;
+		var _p8 = _p4._0;
 		var id = _p9.toId(data);
-		var _p4 = function () {
-			var _p5 = {
-				ctor: '_Tuple2',
-				_0: _elm_lang$core$Native_Utils.eq(
-					_p8.dragging,
-					_elm_lang$core$Maybe$Just(id)),
-				_1: _p9.placeholderView
-			};
-			if (((_p5.ctor === '_Tuple2') && (_p5._0 === true)) && (_p5._1.ctor === 'Just')) {
-				return {
-					ctor: '_Tuple2',
-					_0: _p5._1._0(data),
-					_1: _p9.placeholderClass
-				};
-			} else {
-				return {
-					ctor: '_Tuple2',
-					_0: A2(
-						_p9.itemView,
-						_user$project$Reorderable$ignoreDrag(_p9.toMsg),
-						data),
-					_1: _p9.itemClass
-				};
-			}
-		}();
-		var childView = _p4._0;
-		var childClass = _p4._1;
+		var _p5 = _elm_lang$core$Native_Utils.eq(
+			_p8.dragging,
+			_elm_lang$core$Maybe$Just(id)) ? {
+			ctor: '_Tuple2',
+			_0: _p9.placeholderView(data),
+			_1: _p9.placeholderClass
+		} : {
+			ctor: '_Tuple2',
+			_0: A2(
+				_p9.itemView,
+				_user$project$Reorderable$ignoreDrag(_p9.toMsg),
+				data),
+			_1: _p9.itemClass
+		};
+		var childView = _p5._0;
+		var childClass = _p5._1;
 		return {
 			ctor: '_Tuple2',
 			_0: id,
@@ -9200,27 +9223,20 @@ var _user$project$Reorderable$liView = F4(
 					[
 						_elm_lang$html$Html_Attributes$draggable(
 						_elm_lang$core$Basics$toString(_p9.draggable)),
-						A3(
-						_elm_lang$html$Html_Events$onWithOptions,
-						'dragstart',
-						{stopPropagation: _p8.mouseOverIgnored, preventDefault: _p8.mouseOverIgnored},
-						_elm_lang$core$Json_Decode$succeed(
-							_p9.toMsg(
-								_user$project$Reorderable$StartDragging(id)))),
 						A2(
-						_elm_lang$html$Html_Events$on,
-						'dragend',
-						_elm_lang$core$Json_Decode$succeed(
-							_p9.toMsg(_user$project$Reorderable$StopDragging))),
+						_user$project$Reorderable$onDragStart,
+						_p8.mouseOverIgnored,
+						_p9.toMsg(
+							_user$project$Reorderable$StartDragging(id))),
+						_user$project$Reorderable$onDragEnd(
+						_p9.toMsg(_user$project$Reorderable$StopDragging)),
 						A2(
-						_elm_lang$html$Html_Events$on,
-						'dragenter',
-						_elm_lang$core$Json_Decode$succeed(
-							_p9.updateList(
-								function (_p6) {
-									var _p7 = _p6;
-									return A4(_user$project$Reorderable_Helpers$updateList, _p9.toId, id, _p8.dragging, list);
-								}))),
+						_user$project$Reorderable$onDragEnter,
+						_p9.updateList,
+						function (_p6) {
+							var _p7 = _p6;
+							return A4(_user$project$Reorderable_Helpers$updateList, _p9.toId, id, _p8.dragging, list);
+						}),
 						_elm_lang$html$Html_Attributes$class(childClass)
 					]),
 				_elm_lang$core$Native_List.fromArray(
@@ -9310,7 +9326,7 @@ var _user$project$Reorderable$simpleConfig = function (_p19) {
 			listClass: '',
 			itemClass: '',
 			placeholderClass: '',
-			placeholderView: _elm_lang$core$Maybe$Nothing,
+			placeholderView: _elm_lang$html$Html$text,
 			draggable: true,
 			updateList: _p20.updateList
 		});
@@ -9412,10 +9428,7 @@ var _user$project$Todo$update = F2(
 			case 'ReorderList':
 				return _elm_lang$core$Native_Utils.update(
 					model,
-					{
-						todos: _p1._0(
-							{ctor: '_Tuple0'})
-					});
+					{todos: _p1._0});
 			default:
 				return model;
 		}
@@ -9554,7 +9567,7 @@ var _user$project$Todo$view = function (_p7) {
 								draggable: true,
 								updateList: _user$project$Todo$ReorderList,
 								itemView: _user$project$Todo$taskView,
-								placeholderView: _elm_lang$core$Maybe$Just(_user$project$Todo$placeholderView),
+								placeholderView: _user$project$Todo$placeholderView,
 								listClass: 'todo-list',
 								itemClass: 'todo-list__item',
 								placeholderClass: 'todo-list__placeholder'
