@@ -38,21 +38,22 @@ insertAt index elem list =
 
 updateList : (data -> String) -> String -> Maybe String -> List data -> List data
 updateList toId overId dragging list =
-    let
-        draggedId =
-            dragging
-                |> Maybe.withDefault ""
-
-        indexEqualTo id =
+    case dragging of
+        Nothing ->
             list
-                |> List.findIndex (\a -> toId a == id)
-                |> Maybe.withDefault 0
 
-        overIndex =
-            indexEqualTo overId
+        Just draggedId ->
+            let
+                indexEqualTo id =
+                    list
+                        |> List.findIndex (\a -> toId a == id)
+                        |> Maybe.withDefault 0
 
-        draggedIndex =
-            indexEqualTo draggedId
-    in
-        list
-            |> moveTo draggedIndex overIndex
+                overIndex =
+                    indexEqualTo overId
+
+                draggedIndex =
+                    indexEqualTo draggedId
+            in
+                list
+                    |> moveTo draggedIndex overIndex
