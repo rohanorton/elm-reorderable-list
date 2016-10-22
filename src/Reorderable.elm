@@ -2,6 +2,7 @@ module Reorderable
     exposing
         ( ul
         , ol
+        , div
         , State
         , initialState
         , Msg
@@ -19,7 +20,7 @@ Check out the [examples][] to see how it works
 [examples]: https://github.com/rohanorton/elm-reorderable-list/tree/master/examples
 
 # View
-@docs ul, ol
+@docs ul, ol, div
 
 # Config
 @docs Config, HtmlWrapper, simpleConfig, fullConfig
@@ -139,6 +140,40 @@ your view.
 ul : Config data msg -> State -> List data -> Html msg
 ul ((Config { listClass }) as config) state list =
     Keyed.ul [ class listClass ] <| List.map (liView config list state) list
+
+
+{-| Takes a list and turn it into an html, drag and drop re-orderable
+divs. `Config` is configuration for the component, describing how the
+data should be displayed and how to handle events.
+
+**Note:** `State` and `List data` belong in your `Model`. `Config` belongs in
+your view.
+-}
+div : Config data msg -> State -> List data -> Html msg
+div ((Config { listClass }) as config) state list =
+    Html.div [ class listClass ] <| List.map (divView config list state) list
+
+
+divView : Config data msg -> List data -> State -> data -> Html msg
+divView (Config config) list (State state) data =
+    let
+        id =
+            config.toId data
+
+        ( childView, childClass ) =
+            if state.dragging == Just id then
+                ( config.placeholderView data, config.placeholderClass )
+            else
+                ( config.itemView (ignoreDrag config.toMsg) data, config.itemClass )
+    in
+        Html.div
+            [ draggable <| toString config.draggable
+            , onDragStart state.mouseOverIgnored <| config.toMsg (StartDragging id)
+            , onDragEnd <| config.toMsg StopDragging
+            , onDragEnter config.updateList (\() -> Helpers.updateList config.toId id state.dragging list)
+            , class childClass
+            ]
+            [ childView ]
 
 
 liView : Config data msg -> List data -> State -> data -> ( String, Html msg )
