@@ -33,7 +33,7 @@ Check out the [examples][] to see how it works
 
 -}
 
-import Html exposing (li, text, Html, Attribute)
+import Html exposing (text, Html, Attribute)
 import Html.Keyed as Keyed
 import Html.Attributes exposing (draggable, class)
 import Html.Events exposing (on, onWithOptions)
@@ -127,7 +127,7 @@ your view.
 -}
 ol : Config data msg -> State -> List data -> Html msg
 ol ((Config { listClass }) as config) state list =
-    Keyed.ol [ class listClass ] <| List.map (liView config list state) list
+    Keyed.ol [ class listClass ] <| List.map (childView Html.li config list state) list
 
 
 {-| Takes a list and turn it into an html, drag and drop re-orderable
@@ -139,7 +139,7 @@ your view.
 -}
 ul : Config data msg -> State -> List data -> Html msg
 ul ((Config { listClass }) as config) state list =
-    Keyed.ul [ class listClass ] <| List.map (liView config list state) list
+    Keyed.ul [ class listClass ] <| List.map (childView Html.li config list state) list
 
 
 {-| Takes a list and turn it into an html, drag and drop re-orderable
@@ -151,33 +151,15 @@ your view.
 -}
 div : Config data msg -> State -> List data -> Html msg
 div ((Config { listClass }) as config) state list =
-    Html.div [ class listClass ] <| List.map (divView config list state) list
+    Keyed.node "div" [ class listClass ] <| List.map (childView Html.div config list state) list
 
 
-divView : Config data msg -> List data -> State -> data -> Html msg
-divView (Config config) list (State state) data =
-    let
-        id =
-            config.toId data
-
-        ( childView, childClass ) =
-            if state.dragging == Just id then
-                ( config.placeholderView data, config.placeholderClass )
-            else
-                ( config.itemView (ignoreDrag config.toMsg) data, config.itemClass )
-    in
-        Html.div
-            [ draggable <| toString config.draggable
-            , onDragStart state.mouseOverIgnored <| config.toMsg (StartDragging id)
-            , onDragEnd <| config.toMsg StopDragging
-            , onDragEnter config.updateList (\() -> Helpers.updateList config.toId id state.dragging list)
-            , class childClass
-            ]
-            [ childView ]
+type alias HtmlElement msg =
+    List (Attribute msg) -> List (Html msg) -> Html msg
 
 
-liView : Config data msg -> List data -> State -> data -> ( String, Html msg )
-liView (Config config) list (State state) data =
+childView : HtmlElement msg -> Config data msg -> List data -> State -> data -> ( String, Html msg )
+childView element (Config config) list (State state) data =
     let
         id =
             config.toId data
@@ -189,7 +171,7 @@ liView (Config config) list (State state) data =
                 ( config.itemView (ignoreDrag config.toMsg) data, config.itemClass )
     in
         ( id
-        , li
+        , element
             [ draggable <| toString config.draggable
             , onDragStart state.mouseOverIgnored <| config.toMsg (StartDragging id)
             , onDragEnd <| config.toMsg StopDragging
