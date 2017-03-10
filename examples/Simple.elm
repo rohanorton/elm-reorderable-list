@@ -1,15 +1,14 @@
 module Simple exposing (..)
 
 import Html exposing (..)
-import Html.Attributes exposing (style, type', value)
+import Html.Attributes exposing (style, value)
 import Html.Events exposing (onClick)
-import Html.App
 import Reorderable
 
 
-main : Program Never
+main : Program Never Model Msg
 main =
-    Html.App.beginnerProgram
+    Html.beginnerProgram
         { model = init
         , view = view
         , update = update

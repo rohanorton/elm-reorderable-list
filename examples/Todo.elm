@@ -1,16 +1,15 @@
 module Todo exposing (..)
 
 import Html exposing (..)
-import Html.Attributes exposing (class, type', value, checked, readonly)
+import Html.Attributes exposing (class, type_, value, checked, readonly)
 import Html.Events exposing (on, onClick, onInput, keyCode)
-import Html.App
 import Json.Decode as Json
 import Reorderable
 
 
-main : Program Never
+main : Program Never Model Msg
 main =
-    Html.App.beginnerProgram
+    Html.beginnerProgram
         { model = init
         , view = view
         , update = update
@@ -76,7 +75,6 @@ type Msg
     | UpdateEntry String String
     | ReorderableMsg Reorderable.Msg
     | ReorderList (List Todo)
-    | NoOp
 
 
 update : Msg -> Model -> Model
@@ -122,9 +120,6 @@ update msg model =
 
         ReorderList newTodos ->
             { model | todos = newTodos }
-
-        NoOp ->
-            model
 
 
 updateDone : String -> Bool -> Todos -> Todos
@@ -183,7 +178,7 @@ view { newTask, todos, reorderableState } =
 newTaskView : String -> Html Msg
 newTaskView newTask =
     input
-        [ type' "text"
+        [ type_ "text"
         , class "todo-list__new-input"
         , onInput UpdateNewTaskInput
         , onEnter AddTask
@@ -197,7 +192,7 @@ taskView ignoreDrag { id, action, done } =
     div []
         [ div [ class "todo-list__item__handle" ] []
         , input
-            [ type' "checkbox"
+            [ type_ "checkbox"
             , onClick <| UpdateDone id (not done)
             , checked done
             ]
@@ -206,7 +201,7 @@ taskView ignoreDrag { id, action, done } =
              ignoreDrag function to prevent:
           -}
         , ignoreDrag input
-            [ type' "text"
+            [ type_ "text"
             , onInput <| UpdateEntry id
             , value action
             , readonly done
@@ -224,13 +219,15 @@ placeholderView _ =
 onEnter : Msg -> Attribute Msg
 onEnter msg =
     let
-        tagger code =
+        isEnter code =
             if code == 13 then
-                msg
+                Json.succeed msg
             else
-                NoOp
+                Json.fail "Is not enter"
     in
-        on "keydown" (Json.map tagger keyCode)
+        keyCode
+            |> Json.andThen isEnter
+            |> on "keydown"
 
 
 (=>) : String -> String -> ( String, String )

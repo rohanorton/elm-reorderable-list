@@ -188,7 +188,8 @@ onDragStart ignored msg =
         { stopPropagation = ignored
         , preventDefault = ignored
         }
-        <| Json.succeed msg
+    <|
+        Json.succeed msg
 
 
 onDragEnd : msg -> Attribute msg
@@ -198,7 +199,9 @@ onDragEnd msg =
 
 onDragEnter : (List a -> msg) -> (() -> List a) -> Attribute msg
 onDragEnter updateList listThunk =
-    on "dragenter" <| Json.customDecoder (Json.succeed ()) (\_ -> Ok <| updateList <| listThunk ())
+    (Json.succeed ())
+        |> Json.andThen (Json.succeed << updateList << listThunk)
+        |> on "dragenter"
 
 
 ignoreDrag : (Msg -> msg) -> HtmlWrapper msg
