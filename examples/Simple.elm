@@ -8,10 +8,11 @@ import Reorderable
 
 main : Program Never Model Msg
 main =
-    Html.beginnerProgram
-        { model = init
+    Html.program
+        { init = init
         , view = view
         , update = update
+        , subscriptions = subscriptions
         }
 
 
@@ -25,11 +26,12 @@ type alias Model =
     }
 
 
-init : Model
+init : ( Model, Cmd Msg )
 init =
     { list = [ "apples", "pears", "oranges", "lemons", "peaches", "satsumas" ]
     , reorderableState = Reorderable.initialState
     }
+        ! []
 
 
 
@@ -41,7 +43,7 @@ type Msg
     | UpdateList (List String)
 
 
-update : Msg -> Model -> Model
+update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case Debug.log "Current Message" msg of
         ReorderableMsg childMsg ->
@@ -49,10 +51,19 @@ update msg model =
                 ( newReordableState, _ ) =
                     Reorderable.update childMsg model.reorderableState
             in
-                { model | reorderableState = newReordableState }
+                { model | reorderableState = newReordableState } ! []
 
         UpdateList newList ->
-            { model | list = newList }
+            { model | list = newList } ! []
+
+
+
+-- SUBSCRIPTIONS
+
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    Reorderable.subscriptions ReorderableMsg model.reorderableState
 
 
 
