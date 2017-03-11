@@ -42,8 +42,8 @@ import Html.Keyed as Keyed
 import Html.Attributes exposing (class, style)
 import Html.Events exposing (on, onWithOptions)
 import Json.Decode as Json
-import Mouse exposing (Position)
 import Reorderable.Helpers as Helpers
+import Reorderable.Mouse as Mouse exposing (Position, MouseEvent)
 
 
 -- MODEL
@@ -63,8 +63,8 @@ type State
 
 type alias DraggedItem =
     { id : String
+    , clientPos : Position
     , offset : Position
-    , position : Position
     }
 
 
@@ -87,8 +87,8 @@ component state.
 -}
 type Msg
     = MouseOverIgnored Bool
-    | InternalDragStart String Position
-    | InternalDragMove Position
+    | InternalDragStart String MouseEvent
+    | InternalDragMove MouseEvent
     | InternalDragEnd
 
 
@@ -110,20 +110,25 @@ update msg (State state) =
             , Nothing
             )
 
-        InternalDragStart id xy ->
+        InternalDragStart id ev ->
             let
                 dragging =
-                    DraggedItem id xy xy
+                    DraggedItem id ev.clientPos ev.offset
             in
                 ( State { state | dragging = Just dragging }
                 , Just <| DragStart id
                 )
 
-        InternalDragMove xy ->
+        InternalDragMove ev ->
             let
                 dragging =
                     state.dragging
-                        |> Maybe.map (\draggable -> { draggable | position = xy })
+                        |> Maybe.map
+                            (\dragged ->
+                                { dragged
+                                    | clientPos = ev.clientPos
+                                }
+                            )
             in
                 ( State { state | dragging = dragging }
                 , Nothing
@@ -270,20 +275,15 @@ draggingView element (Config config) draggedItem data =
 
 
 getPosition : DraggedItem -> Position
-getPosition { offset, position } =
-    { x = position.x + offset.x
-    , y = position.y + offset.y
+getPosition { clientPos, offset } =
+    { x = clientPos.x - offset.x
+    , y = clientPos.y - offset.y
     }
 
 
-positionDecoder : Json.Decoder Position
-positionDecoder =
-    Mouse.position
-
-
-onDragStart : Bool -> (Position -> msg) -> Attribute msg
+onDragStart : Bool -> (MouseEvent -> msg) -> Attribute msg
 onDragStart ignored tagger =
-    positionDecoder
+    Mouse.mouseEventDecoder
         |> Json.andThen (decodeWhen <| not ignored)
         |> Json.map tagger
         |> on "mousedown"
