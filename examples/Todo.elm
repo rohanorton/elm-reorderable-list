@@ -1,19 +1,19 @@
 module Todo exposing (..)
 
 import Html exposing (..)
-import Html.Attributes exposing (class, type', value, checked, readonly)
+import Html.Attributes exposing (class, type_, value, checked, readonly)
 import Html.Events exposing (on, onClick, onInput, keyCode)
-import Html.App
 import Json.Decode as Json
 import Reorderable
 
 
-main : Program Never
+main : Program Never Model Msg
 main =
-    Html.App.beginnerProgram
-        { model = init
+    Html.program
+        { init = init
         , view = view
         , update = update
+        , subscriptions = subscriptions
         }
 
 
@@ -56,13 +56,14 @@ initialTodos =
     ]
 
 
-init : Model
+init : ( Model, Cmd Msg )
 init =
     { todos = initialTodos
     , reorderableState = Reorderable.initialState
     , newTask = ""
     , nextId = 4
     }
+        ! []
 
 
 
@@ -76,14 +77,13 @@ type Msg
     | UpdateEntry String String
     | ReorderableMsg Reorderable.Msg
     | ReorderList (List Todo)
-    | NoOp
 
 
-update : Msg -> Model -> Model
+update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case Debug.log "Current Message" msg of
         UpdateNewTaskInput newTask ->
-            { model | newTask = newTask }
+            { model | newTask = newTask } ! []
 
         AddTask ->
             let
@@ -98,33 +98,31 @@ update msg model =
                     , nextId = model.nextId + 1
                     , todos = model.todos ++ [ newTodo ]
                 }
+                    ! []
 
         UpdateDone id done ->
             let
                 newTodos =
                     updateDone id done model.todos
             in
-                { model | todos = newTodos }
+                { model | todos = newTodos } ! []
 
         UpdateEntry id newAction ->
             let
                 newTodos =
                     updateAction id newAction model.todos
             in
-                { model | todos = newTodos }
+                { model | todos = newTodos } ! []
 
         ReorderableMsg childMsg ->
             let
                 ( newReordableState, _ ) =
                     Reorderable.update childMsg model.reorderableState
             in
-                { model | reorderableState = newReordableState }
+                { model | reorderableState = newReordableState } ! []
 
         ReorderList newTodos ->
-            { model | todos = newTodos }
-
-        NoOp ->
-            model
+            { model | todos = newTodos } ! []
 
 
 updateDone : String -> Bool -> Todos -> Todos
@@ -149,6 +147,15 @@ updateAction id action todos =
                 todo
         )
         todos
+
+
+
+-- SUBSCRIPTIONS
+
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    Reorderable.subscriptions ReorderableMsg model.reorderableState
 
 
 
@@ -183,7 +190,7 @@ view { newTask, todos, reorderableState } =
 newTaskView : String -> Html Msg
 newTaskView newTask =
     input
-        [ type' "text"
+        [ type_ "text"
         , class "todo-list__new-input"
         , onInput UpdateNewTaskInput
         , onEnter AddTask
@@ -196,8 +203,8 @@ taskView : Reorderable.HtmlWrapper Msg -> Todo -> Html Msg
 taskView ignoreDrag { id, action, done } =
     div []
         [ div [ class "todo-list__item__handle" ] []
-        , input
-            [ type' "checkbox"
+        , ignoreDrag input
+            [ type_ "checkbox"
             , onClick <| UpdateDone id (not done)
             , checked done
             ]
@@ -206,7 +213,7 @@ taskView ignoreDrag { id, action, done } =
              ignoreDrag function to prevent:
           -}
         , ignoreDrag input
-            [ type' "text"
+            [ type_ "text"
             , onInput <| UpdateEntry id
             , value action
             , readonly done
@@ -224,13 +231,15 @@ placeholderView _ =
 onEnter : Msg -> Attribute Msg
 onEnter msg =
     let
-        tagger code =
+        isEnter code =
             if code == 13 then
-                msg
+                Json.succeed msg
             else
-                NoOp
+                Json.fail "Is not enter"
     in
-        on "keydown" (Json.map tagger keyCode)
+        keyCode
+            |> Json.andThen isEnter
+            |> on "keydown"
 
 
 (=>) : String -> String -> ( String, String )
