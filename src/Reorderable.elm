@@ -63,7 +63,7 @@ type State
 
 type alias DraggedItem =
     { id : String
-    , clientPos : Position
+    , mousePosition : Position
     , offset : Position
     }
 
@@ -113,7 +113,7 @@ update msg (State state) =
         InternalDragStart id ev ->
             let
                 dragging =
-                    DraggedItem id ev.clientPos ev.offset
+                    DraggedItem id ev.mousePosition ev.offset
             in
                 ( State { state | dragging = Just dragging }
                 , Just <| DragStart id
@@ -126,7 +126,7 @@ update msg (State state) =
                         |> Maybe.map
                             (\dragged ->
                                 { dragged
-                                    | clientPos = ev.clientPos
+                                    | mousePosition = ev.mousePosition
                                 }
                             )
             in
@@ -275,9 +275,9 @@ draggingView element (Config config) draggedItem data =
 
 
 getPosition : DraggedItem -> Position
-getPosition { clientPos, offset } =
-    { x = clientPos.x - offset.x
-    , y = clientPos.y - offset.y
+getPosition { mousePosition, offset } =
+    { x = mousePosition.x - offset.x
+    , y = mousePosition.y - offset.y
     }
 
 
