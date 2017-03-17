@@ -28,25 +28,25 @@ type alias Position =
 
 
 type alias MouseEvent =
-    { mousePosition : Position
-    , offset : Position
+    { startingPosition : Position
+    , movement : Position
     }
 
 
 mouseEvent : Int -> Int -> Int -> Int -> MouseEvent
-mouseEvent pageX pageY offsetX offsetY =
-    { mousePosition = Position pageX pageY
-    , offset = Position offsetX offsetY
+mouseEvent elemOffsetX elemOffsetY movementX movementY =
+    { startingPosition = Position elemOffsetX elemOffsetY
+    , movement = Position movementX movementY
     }
 
 
 mouseEventDecoder : Json.Decoder MouseEvent
 mouseEventDecoder =
     Json.map4 mouseEvent
-        (Json.field "pageX" Json.int)
-        (Json.field "pageY" Json.int)
-        (Json.field "offsetX" Json.int)
-        (Json.field "offsetY" Json.int)
+        (Json.at [ "srcElement", "offsetLeft" ] Json.int)
+        (Json.at [ "srcElement", "offsetTop" ] Json.int)
+        (Json.field "movementX" Json.int)
+        (Json.field "movementY" Json.int)
 
 
 
