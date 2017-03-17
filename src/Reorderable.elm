@@ -13,6 +13,7 @@ module Reorderable
         , subscriptions
         , ul
         , update
+        , updateWithEvents
         )
 
 {-| This library helps you create drag and drop re-orderable html lists
@@ -33,7 +34,7 @@ Check out the [examples][] to see how it works
 @docs subscriptions
 
 # Updates
-@docs Msg, update, Event
+@docs Msg, update, updateWithEvents, Event
 
 -}
 
@@ -91,7 +92,15 @@ type Msg
     | InternalDragEnd
 
 
-{-|
+{-| Update function for updating the state of the component.
+-}
+update : Msg -> State -> State
+update msg state =
+    updateWithEvents msg state
+        |> Tuple.first
+
+
+{-| Events returned by `updateWithEvents` function.
 -}
 type Event
     = DragEnd
@@ -99,10 +108,11 @@ type Event
     | DragMove
 
 
-{-| Update function for updating the state of the component.
+{-| Update function for updating the state of the component, but also returns
+some events `DragEnd`, `DragStart` and `DragMove`.
 -}
-update : Msg -> State -> ( State, Maybe Event )
-update msg (State state) =
+updateWithEvents : Msg -> State -> ( State, Maybe Event )
+updateWithEvents msg (State state) =
     case Debug.log "msg" msg of
         MouseOverIgnored mouseOverIgnored ->
             ( State { state | mouseOverIgnored = mouseOverIgnored }

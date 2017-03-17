@@ -48,7 +48,7 @@ update msg model =
     case Debug.log "Current Message" msg of
         ReorderableMsg childMsg ->
             let
-                ( newReordableState, _ ) =
+                newReordableState =
                     Reorderable.update childMsg model.reorderableState
             in
                 { model | reorderableState = newReordableState } ! []

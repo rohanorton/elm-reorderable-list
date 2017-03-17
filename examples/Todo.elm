@@ -116,7 +116,7 @@ update msg model =
 
         ReorderableMsg childMsg ->
             let
-                ( newReordableState, _ ) =
+                newReordableState =
                     Reorderable.update childMsg model.reorderableState
             in
                 { model | reorderableState = newReordableState } ! []
