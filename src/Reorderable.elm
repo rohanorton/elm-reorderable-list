@@ -63,8 +63,7 @@ type State
 
 type alias DraggedItem =
     { id : String
-    , mousePosition : Position
-    , offset : Position
+    , position : Position
     }
 
 
@@ -113,7 +112,7 @@ update msg (State state) =
         InternalDragStart id ev ->
             let
                 dragging =
-                    DraggedItem id ev.mousePosition ev.offset
+                    DraggedItem id ev.startingPosition
             in
                 ( State { state | dragging = Just dragging }
                 , Just <| DragStart id
@@ -126,7 +125,7 @@ update msg (State state) =
                         |> Maybe.map
                             (\dragged ->
                                 { dragged
-                                    | mousePosition = ev.mousePosition
+                                    | position = move dragged.position ev.movement
                                 }
                             )
             in
@@ -172,7 +171,7 @@ your view.
 -}
 ol : Config data msg -> State -> List data -> Html msg
 ol ((Config { listClass }) as config) state list =
-    Keyed.ol [ class listClass ] <| List.concatMap (childView Html.li config list state) list
+    Keyed.ol [ class listClass, style [ ( "position", "relative" ) ] ] <| List.concatMap (childView Html.li config list state) list
 
 
 {-| Takes a list and turn it into an html, drag and drop re-orderable
@@ -184,7 +183,7 @@ your view.
 -}
 ul : Config data msg -> State -> List data -> Html msg
 ul ((Config { listClass }) as config) state list =
-    Keyed.ul [ class listClass ] <| List.concatMap (childView Html.li config list state) list
+    Keyed.ul [ class listClass, style [ ( "position", "relative" ) ] ] <| List.concatMap (childView Html.li config list state) list
 
 
 {-| Takes a list and turn it into an html, drag and drop re-orderable
@@ -196,7 +195,7 @@ your view.
 -}
 div : Config data msg -> State -> List data -> Html msg
 div ((Config { listClass }) as config) state list =
-    Keyed.node "div" [ class listClass ] <| (List.concatMap (childView Html.div config list state) list)
+    Keyed.node "div" [ class listClass, style [ ( "position", "relative" ) ] ] <| (List.concatMap (childView Html.div config list state) list)
 
 
 includeDragged : HtmlElement msg -> Config data msg -> State -> data -> List ( String, Html msg )
@@ -256,7 +255,7 @@ draggingView : HtmlElement msg -> Config data msg -> DraggedItem -> data -> ( St
 draggingView element (Config config) draggedItem data =
     let
         { x, y } =
-            getPosition draggedItem
+            draggedItem.position
     in
         ( "__draggedItem"
         , element
@@ -272,13 +271,6 @@ draggingView element (Config config) draggedItem data =
             ]
             [ config.itemView (ignoreDrag config.toMsg) data ]
         )
-
-
-getPosition : DraggedItem -> Position
-getPosition { mousePosition, offset } =
-    { x = mousePosition.x - offset.x
-    , y = mousePosition.y - offset.y
-    }
 
 
 onDragStart : Bool -> (MouseEvent -> msg) -> Attribute msg
@@ -413,3 +405,10 @@ fullConfig =
 px : number -> String
 px num =
     (toString num) ++ "px"
+
+
+move : Position -> Position -> Position
+move currentPos movement =
+    { x = currentPos.x + movement.x
+    , y = currentPos.y + movement.y
+    }
