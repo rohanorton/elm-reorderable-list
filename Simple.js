@@ -10332,22 +10332,44 @@ var _rohanorton$elm_reorderable_list$Reorderable_Mouse$Position = F2(
 		return {x: a, y: b};
 	});
 var _rohanorton$elm_reorderable_list$Reorderable_Mouse$mouseEvent = F4(
-	function (pageX, pageY, offsetX, offsetY) {
+	function (elemOffsetX, elemOffsetY, movementX, movementY) {
 		return {
-			mousePosition: A2(_rohanorton$elm_reorderable_list$Reorderable_Mouse$Position, pageX, pageY),
-			offset: A2(_rohanorton$elm_reorderable_list$Reorderable_Mouse$Position, offsetX, offsetY)
+			startingPosition: A2(_rohanorton$elm_reorderable_list$Reorderable_Mouse$Position, elemOffsetX, elemOffsetY),
+			movement: A2(_rohanorton$elm_reorderable_list$Reorderable_Mouse$Position, movementX, movementY)
 		};
 	});
 var _rohanorton$elm_reorderable_list$Reorderable_Mouse$mouseEventDecoder = A5(
 	_elm_lang$core$Json_Decode$map4,
 	_rohanorton$elm_reorderable_list$Reorderable_Mouse$mouseEvent,
-	A2(_elm_lang$core$Json_Decode$field, 'pageX', _elm_lang$core$Json_Decode$int),
-	A2(_elm_lang$core$Json_Decode$field, 'pageY', _elm_lang$core$Json_Decode$int),
-	A2(_elm_lang$core$Json_Decode$field, 'offsetX', _elm_lang$core$Json_Decode$int),
-	A2(_elm_lang$core$Json_Decode$field, 'offsetY', _elm_lang$core$Json_Decode$int));
+	A2(
+		_elm_lang$core$Json_Decode$at,
+		{
+			ctor: '::',
+			_0: 'srcElement',
+			_1: {
+				ctor: '::',
+				_0: 'offsetLeft',
+				_1: {ctor: '[]'}
+			}
+		},
+		_elm_lang$core$Json_Decode$int),
+	A2(
+		_elm_lang$core$Json_Decode$at,
+		{
+			ctor: '::',
+			_0: 'srcElement',
+			_1: {
+				ctor: '::',
+				_0: 'offsetTop',
+				_1: {ctor: '[]'}
+			}
+		},
+		_elm_lang$core$Json_Decode$int),
+	A2(_elm_lang$core$Json_Decode$field, 'movementX', _elm_lang$core$Json_Decode$int),
+	A2(_elm_lang$core$Json_Decode$field, 'movementY', _elm_lang$core$Json_Decode$int));
 var _rohanorton$elm_reorderable_list$Reorderable_Mouse$MouseEvent = F2(
 	function (a, b) {
-		return {mousePosition: a, offset: b};
+		return {startingPosition: a, movement: b};
 	});
 var _rohanorton$elm_reorderable_list$Reorderable_Mouse$Watcher = F2(
 	function (a, b) {
@@ -10453,6 +10475,10 @@ var _rohanorton$elm_reorderable_list$Reorderable_Mouse$subMap = F2(
 	});
 _elm_lang$core$Native_Platform.effectManagers['Reorderable.Mouse'] = {pkg: 'rohanorton/elm-reorderable-list', init: _rohanorton$elm_reorderable_list$Reorderable_Mouse$init, onEffects: _rohanorton$elm_reorderable_list$Reorderable_Mouse$onEffects, onSelfMsg: _rohanorton$elm_reorderable_list$Reorderable_Mouse$onSelfMsg, tag: 'sub', subMap: _rohanorton$elm_reorderable_list$Reorderable_Mouse$subMap};
 
+var _rohanorton$elm_reorderable_list$Reorderable$move = F2(
+	function (currentPos, movement) {
+		return {x: currentPos.x + movement.x, y: currentPos.y + movement.y};
+	});
 var _rohanorton$elm_reorderable_list$Reorderable$px = function (num) {
 	return A2(
 		_elm_lang$core$Basics_ops['++'],
@@ -10505,15 +10531,9 @@ var _rohanorton$elm_reorderable_list$Reorderable$onDragStart = F2(
 					_rohanorton$elm_reorderable_list$Reorderable$decodeWhen(!ignored),
 					_rohanorton$elm_reorderable_list$Reorderable_Mouse$mouseEventDecoder)));
 	});
-var _rohanorton$elm_reorderable_list$Reorderable$getPosition = function (_p1) {
-	var _p2 = _p1;
-	var _p4 = _p2.offset;
-	var _p3 = _p2.mousePosition;
-	return {x: _p3.x - _p4.x, y: _p3.y - _p4.y};
-};
-var _rohanorton$elm_reorderable_list$Reorderable$DraggedItem = F3(
-	function (a, b, c) {
-		return {id: a, mousePosition: b, offset: c};
+var _rohanorton$elm_reorderable_list$Reorderable$DraggedItem = F2(
+	function (a, b) {
+		return {id: a, position: b};
 	});
 var _rohanorton$elm_reorderable_list$Reorderable$State = function (a) {
 	return {ctor: 'State', _0: a};
@@ -10525,10 +10545,10 @@ var _rohanorton$elm_reorderable_list$Reorderable$InternalDragMove = function (a)
 	return {ctor: 'InternalDragMove', _0: a};
 };
 var _rohanorton$elm_reorderable_list$Reorderable$subscriptions = F2(
-	function (toMsg, _p5) {
-		var _p6 = _p5;
-		var _p7 = _p6._0.dragging;
-		if (_p7.ctor === 'Nothing') {
+	function (toMsg, _p1) {
+		var _p2 = _p1;
+		var _p3 = _p2._0.dragging;
+		if (_p3.ctor === 'Nothing') {
 			return _elm_lang$core$Platform_Sub$batch(
 				{ctor: '[]'});
 		} else {
@@ -10536,9 +10556,9 @@ var _rohanorton$elm_reorderable_list$Reorderable$subscriptions = F2(
 				{
 					ctor: '::',
 					_0: _rohanorton$elm_reorderable_list$Reorderable_Mouse$moves(
-						function (_p8) {
+						function (_p4) {
 							return toMsg(
-								_rohanorton$elm_reorderable_list$Reorderable$InternalDragMove(_p8));
+								_rohanorton$elm_reorderable_list$Reorderable$InternalDragMove(_p4));
 						}),
 					_1: {
 						ctor: '::',
@@ -10586,12 +10606,12 @@ var _rohanorton$elm_reorderable_list$Reorderable$ignoreDrag = F4(
 			children);
 	});
 var _rohanorton$elm_reorderable_list$Reorderable$draggingView = F4(
-	function (element, _p9, draggedItem, data) {
-		var _p10 = _p9;
-		var _p12 = _p10._0;
-		var _p11 = _rohanorton$elm_reorderable_list$Reorderable$getPosition(draggedItem);
-		var x = _p11.x;
-		var y = _p11.y;
+	function (element, _p5, draggedItem, data) {
+		var _p6 = _p5;
+		var _p8 = _p6._0;
+		var _p7 = draggedItem.position;
+		var x = _p7.x;
+		var y = _p7.y;
 		return {
 			ctor: '_Tuple2',
 			_0: '__draggedItem',
@@ -10633,15 +10653,15 @@ var _rohanorton$elm_reorderable_list$Reorderable$draggingView = F4(
 						}),
 					_1: {
 						ctor: '::',
-						_0: _elm_lang$html$Html_Attributes$class(_p12.itemClass),
+						_0: _elm_lang$html$Html_Attributes$class(_p8.itemClass),
 						_1: {ctor: '[]'}
 					}
 				},
 				{
 					ctor: '::',
 					_0: A2(
-						_p12.itemView,
-						_rohanorton$elm_reorderable_list$Reorderable$ignoreDrag(_p12.toMsg),
+						_p8.itemView,
+						_rohanorton$elm_reorderable_list$Reorderable$ignoreDrag(_p8.toMsg),
 						data),
 					_1: {ctor: '[]'}
 				})
@@ -10653,34 +10673,33 @@ var _rohanorton$elm_reorderable_list$Reorderable$DragStart = function (a) {
 };
 var _rohanorton$elm_reorderable_list$Reorderable$DragEnd = {ctor: 'DragEnd'};
 var _rohanorton$elm_reorderable_list$Reorderable$update = F2(
-	function (msg, _p13) {
-		var _p14 = _p13;
-		var _p18 = _p14._0;
-		var _p15 = A2(_elm_lang$core$Debug$log, 'msg', msg);
-		switch (_p15.ctor) {
+	function (msg, _p9) {
+		var _p10 = _p9;
+		var _p13 = _p10._0;
+		var _p11 = A2(_elm_lang$core$Debug$log, 'msg', msg);
+		switch (_p11.ctor) {
 			case 'MouseOverIgnored':
 				return {
 					ctor: '_Tuple2',
 					_0: _rohanorton$elm_reorderable_list$Reorderable$State(
 						_elm_lang$core$Native_Utils.update(
-							_p18,
-							{mouseOverIgnored: _p15._0})),
+							_p13,
+							{mouseOverIgnored: _p11._0})),
 					_1: _elm_lang$core$Maybe$Nothing
 				};
 			case 'InternalDragStart':
-				var _p17 = _p15._0;
-				var _p16 = _p15._1;
-				var dragging = A3(_rohanorton$elm_reorderable_list$Reorderable$DraggedItem, _p17, _p16.mousePosition, _p16.offset);
+				var _p12 = _p11._0;
+				var dragging = A2(_rohanorton$elm_reorderable_list$Reorderable$DraggedItem, _p12, _p11._1.startingPosition);
 				return {
 					ctor: '_Tuple2',
 					_0: _rohanorton$elm_reorderable_list$Reorderable$State(
 						_elm_lang$core$Native_Utils.update(
-							_p18,
+							_p13,
 							{
 								dragging: _elm_lang$core$Maybe$Just(dragging)
 							})),
 					_1: _elm_lang$core$Maybe$Just(
-						_rohanorton$elm_reorderable_list$Reorderable$DragStart(_p17))
+						_rohanorton$elm_reorderable_list$Reorderable$DragStart(_p12))
 				};
 			case 'InternalDragMove':
 				var dragging = A2(
@@ -10688,14 +10707,16 @@ var _rohanorton$elm_reorderable_list$Reorderable$update = F2(
 					function (dragged) {
 						return _elm_lang$core$Native_Utils.update(
 							dragged,
-							{mousePosition: _p15._0.mousePosition});
+							{
+								position: A2(_rohanorton$elm_reorderable_list$Reorderable$move, dragged.position, _p11._0.movement)
+							});
 					},
-					_p18.dragging);
+					_p13.dragging);
 				return {
 					ctor: '_Tuple2',
 					_0: _rohanorton$elm_reorderable_list$Reorderable$State(
 						_elm_lang$core$Native_Utils.update(
-							_p18,
+							_p13,
 							{dragging: dragging})),
 					_1: _elm_lang$core$Maybe$Nothing
 				};
@@ -10704,7 +10725,7 @@ var _rohanorton$elm_reorderable_list$Reorderable$update = F2(
 					ctor: '_Tuple2',
 					_0: _rohanorton$elm_reorderable_list$Reorderable$State(
 						_elm_lang$core$Native_Utils.update(
-							_p18,
+							_p13,
 							{dragging: _elm_lang$core$Maybe$Nothing})),
 					_1: _elm_lang$core$Maybe$Just(_rohanorton$elm_reorderable_list$Reorderable$DragEnd)
 				};
@@ -10714,42 +10735,42 @@ var _rohanorton$elm_reorderable_list$Reorderable$Config = function (a) {
 	return {ctor: 'Config', _0: a};
 };
 var _rohanorton$elm_reorderable_list$Reorderable$includeDragged = F4(
-	function (element, _p20, _p19, data) {
-		var _p21 = _p20;
-		var _p25 = _p21._0;
-		var _p22 = _p19;
-		var _p23 = _p22._0.dragging;
-		if (_p23.ctor === 'Nothing') {
+	function (element, _p15, _p14, data) {
+		var _p16 = _p15;
+		var _p20 = _p16._0;
+		var _p17 = _p14;
+		var _p18 = _p17._0.dragging;
+		if (_p18.ctor === 'Nothing') {
 			return {ctor: '[]'};
 		} else {
-			var _p24 = _p23._0;
+			var _p19 = _p18._0;
 			return _elm_lang$core$Native_Utils.eq(
-				_p24.id,
-				_p25.toId(data)) ? {
+				_p19.id,
+				_p20.toId(data)) ? {
 				ctor: '::',
 				_0: A4(
 					_rohanorton$elm_reorderable_list$Reorderable$draggingView,
 					element,
-					_rohanorton$elm_reorderable_list$Reorderable$Config(_p25),
-					_p24,
+					_rohanorton$elm_reorderable_list$Reorderable$Config(_p20),
+					_p19,
 					data),
 				_1: {ctor: '[]'}
 			} : {ctor: '[]'};
 		}
 	});
 var _rohanorton$elm_reorderable_list$Reorderable$childView = F5(
-	function (element, _p27, list, _p26, data) {
-		var _p28 = _p27;
-		var _p35 = _p28._0;
-		var _p29 = _p26;
-		var _p34 = _p29._0;
+	function (element, _p22, list, _p21, data) {
+		var _p23 = _p22;
+		var _p30 = _p23._0;
+		var _p24 = _p21;
+		var _p29 = _p24._0;
 		var dragged = A4(
 			_rohanorton$elm_reorderable_list$Reorderable$includeDragged,
 			element,
-			_rohanorton$elm_reorderable_list$Reorderable$Config(_p35),
-			_rohanorton$elm_reorderable_list$Reorderable$State(_p34),
+			_rohanorton$elm_reorderable_list$Reorderable$Config(_p30),
+			_rohanorton$elm_reorderable_list$Reorderable$State(_p29),
 			data);
-		var id = _p35.toId(data);
+		var id = _p30.toId(data);
 		var isDragging = A2(
 			_elm_lang$core$Maybe$withDefault,
 			false,
@@ -10764,21 +10785,21 @@ var _rohanorton$elm_reorderable_list$Reorderable$childView = F5(
 					function (_) {
 						return _.id;
 					},
-					_p34.dragging)));
-		var _p30 = isDragging ? {
+					_p29.dragging)));
+		var _p25 = isDragging ? {
 			ctor: '_Tuple2',
-			_0: _p35.placeholderView(data),
-			_1: _p35.placeholderClass
+			_0: _p30.placeholderView(data),
+			_1: _p30.placeholderClass
 		} : {
 			ctor: '_Tuple2',
 			_0: A2(
-				_p35.itemView,
-				_rohanorton$elm_reorderable_list$Reorderable$ignoreDrag(_p35.toMsg),
+				_p30.itemView,
+				_rohanorton$elm_reorderable_list$Reorderable$ignoreDrag(_p30.toMsg),
 				data),
-			_1: _p35.itemClass
+			_1: _p30.itemClass
 		};
-		var childView = _p30._0;
-		var childClass = _p30._1;
+		var childView = _p25._0;
+		var childClass = _p25._1;
 		return {
 			ctor: '::',
 			_0: {
@@ -10790,31 +10811,31 @@ var _rohanorton$elm_reorderable_list$Reorderable$childView = F5(
 						ctor: '::',
 						_0: A2(
 							_rohanorton$elm_reorderable_list$Reorderable$onDragStart,
-							_p34.mouseOverIgnored,
-							function (_p31) {
-								return _p35.toMsg(
-									A2(_rohanorton$elm_reorderable_list$Reorderable$InternalDragStart, id, _p31));
+							_p29.mouseOverIgnored,
+							function (_p26) {
+								return _p30.toMsg(
+									A2(_rohanorton$elm_reorderable_list$Reorderable$InternalDragStart, id, _p26));
 							}),
 						_1: {
 							ctor: '::',
 							_0: A3(
 								_rohanorton$elm_reorderable_list$Reorderable$onDragOver,
-								_p35.updateList,
-								function (_p32) {
-									var _p33 = _p32;
+								_p30.updateList,
+								function (_p27) {
+									var _p28 = _p27;
 									return A4(
 										_rohanorton$elm_reorderable_list$Reorderable_Helpers$updateList,
-										_p35.toId,
+										_p30.toId,
 										id,
 										A2(
 											_elm_lang$core$Maybe$map,
 											function (_) {
 												return _.id;
 											},
-											_p34.dragging),
+											_p29.dragging),
 										list);
 								},
-								!_elm_lang$core$Native_Utils.eq(_p34.dragging, _elm_lang$core$Maybe$Nothing)),
+								!_elm_lang$core$Native_Utils.eq(_p29.dragging, _elm_lang$core$Maybe$Nothing)),
 							_1: {
 								ctor: '::',
 								_0: _elm_lang$html$Html_Attributes$class(childClass),
@@ -10832,64 +10853,91 @@ var _rohanorton$elm_reorderable_list$Reorderable$childView = F5(
 		};
 	});
 var _rohanorton$elm_reorderable_list$Reorderable$ol = F3(
-	function (_p36, state, list) {
-		var _p37 = _p36;
+	function (_p31, state, list) {
+		var _p32 = _p31;
 		return A2(
 			_elm_lang$html$Html_Keyed$ol,
 			{
 				ctor: '::',
-				_0: _elm_lang$html$Html_Attributes$class(_p37._0.listClass),
-				_1: {ctor: '[]'}
+				_0: _elm_lang$html$Html_Attributes$class(_p32._0.listClass),
+				_1: {
+					ctor: '::',
+					_0: _elm_lang$html$Html_Attributes$style(
+						{
+							ctor: '::',
+							_0: {ctor: '_Tuple2', _0: 'position', _1: 'relative'},
+							_1: {ctor: '[]'}
+						}),
+					_1: {ctor: '[]'}
+				}
 			},
 			A2(
 				_elm_lang$core$List$concatMap,
-				A4(_rohanorton$elm_reorderable_list$Reorderable$childView, _elm_lang$html$Html$li, _p37, list, state),
+				A4(_rohanorton$elm_reorderable_list$Reorderable$childView, _elm_lang$html$Html$li, _p32, list, state),
 				list));
 	});
 var _rohanorton$elm_reorderable_list$Reorderable$ul = F3(
-	function (_p38, state, list) {
-		var _p39 = _p38;
+	function (_p33, state, list) {
+		var _p34 = _p33;
 		return A2(
 			_elm_lang$html$Html_Keyed$ul,
 			{
 				ctor: '::',
-				_0: _elm_lang$html$Html_Attributes$class(_p39._0.listClass),
-				_1: {ctor: '[]'}
+				_0: _elm_lang$html$Html_Attributes$class(_p34._0.listClass),
+				_1: {
+					ctor: '::',
+					_0: _elm_lang$html$Html_Attributes$style(
+						{
+							ctor: '::',
+							_0: {ctor: '_Tuple2', _0: 'position', _1: 'relative'},
+							_1: {ctor: '[]'}
+						}),
+					_1: {ctor: '[]'}
+				}
 			},
 			A2(
 				_elm_lang$core$List$concatMap,
-				A4(_rohanorton$elm_reorderable_list$Reorderable$childView, _elm_lang$html$Html$li, _p39, list, state),
+				A4(_rohanorton$elm_reorderable_list$Reorderable$childView, _elm_lang$html$Html$li, _p34, list, state),
 				list));
 	});
 var _rohanorton$elm_reorderable_list$Reorderable$div = F3(
-	function (_p40, state, list) {
-		var _p41 = _p40;
+	function (_p35, state, list) {
+		var _p36 = _p35;
 		return A3(
 			_elm_lang$html$Html_Keyed$node,
 			'div',
 			{
 				ctor: '::',
-				_0: _elm_lang$html$Html_Attributes$class(_p41._0.listClass),
-				_1: {ctor: '[]'}
+				_0: _elm_lang$html$Html_Attributes$class(_p36._0.listClass),
+				_1: {
+					ctor: '::',
+					_0: _elm_lang$html$Html_Attributes$style(
+						{
+							ctor: '::',
+							_0: {ctor: '_Tuple2', _0: 'position', _1: 'relative'},
+							_1: {ctor: '[]'}
+						}),
+					_1: {ctor: '[]'}
+				}
 			},
 			A2(
 				_elm_lang$core$List$concatMap,
-				A4(_rohanorton$elm_reorderable_list$Reorderable$childView, _elm_lang$html$Html$div, _p41, list, state),
+				A4(_rohanorton$elm_reorderable_list$Reorderable$childView, _elm_lang$html$Html$div, _p36, list, state),
 				list));
 	});
-var _rohanorton$elm_reorderable_list$Reorderable$simpleConfig = function (_p42) {
-	var _p43 = _p42;
+var _rohanorton$elm_reorderable_list$Reorderable$simpleConfig = function (_p37) {
+	var _p38 = _p37;
 	return _rohanorton$elm_reorderable_list$Reorderable$Config(
 		{
 			toId: _elm_lang$core$Basics$identity,
-			toMsg: _p43.toMsg,
+			toMsg: _p38.toMsg,
 			itemView: _elm_lang$core$Basics$always(_elm_lang$html$Html$text),
 			listClass: '',
 			itemClass: '',
 			placeholderClass: '',
 			placeholderView: _elm_lang$html$Html$text,
 			draggable: true,
-			updateList: _p43.updateList
+			updateList: _p38.updateList
 		});
 };
 var _rohanorton$elm_reorderable_list$Reorderable$fullConfig = _rohanorton$elm_reorderable_list$Reorderable$Config;
