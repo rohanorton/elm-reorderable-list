@@ -1,4 +1,4 @@
-# Elm Reorderable List
+# Elm Reorderable List
 
 A drag and drop reorderable list component for elm.
 
@@ -12,7 +12,7 @@ API might change a bit before it's released to elm-packages.
   2. [More complex](https://rohanorton.github.io/elm-reorderable-list/Todo.html) /
      [Code](https://github.com/rohanorton/elm-reorderable-list/blob/master/examples/Todo.elm)
 
-## Roadmap
+## Roadmap
 
 These are features that I am going to try and implement soon:
 
